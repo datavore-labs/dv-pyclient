@@ -48,6 +48,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/sanjayvenkat2000/dv_pyclient',
-    version='0.1.4',
+    version='0.1.5',
     zip_safe=False,
 )
