@@ -2,21 +2,18 @@
 import ndjson
 import requests
 import jwt
+import getpass
 
 
 class Session:
-    password = None
-    username = None
-    auth_domain = None
-    api_domain = None
+    user_name = None
     user = None
     token = None
+    env_conf = None
 
-    def __init__(self, user_name, password, auth_domain, api_domain):
-        self.username = user_name
-        self.password = password
-        self.auth_domain = auth_domain
-        self.api_domain = api_domain
+    def __init__(self, user_name, env_conf):
+        self.user_name = user_name
+        self.env_conf = env_conf
 
     def set_user(self, user):
         self.user = user
@@ -25,15 +22,17 @@ class Session:
         self.token = token
 
 
-def _login(user_name=None, password=None, env_conf=None):
+def _login(user_name=None, env_conf=None):
+    password = getpass.getpass(prompt=f'Enter password for user {user_name} :')
+
     if user_name is not None and password is not None and env_conf is not None:
         res = requests.get(env_conf['authDomain'], auth=(user_name, password))
         if res.status_code == 200:
             result_json = res.json()
             token = result_json['nextToken']
             user = jwt.decode(token, verify=False)
-            print(f'Login success for {user}')
-            result = Session(user_name, password, env_conf['authDomain'], env_conf['apiDomain'])
+            print(f'Login success for {user["fullName"]}\n')
+            result = Session(user_name, env_conf)
             result.set_user(user)
             result.set_token(token)
             return result
@@ -60,12 +59,12 @@ def _get_data(session: Session, step_info=None):
         'Content-type': 'application/json',
     }
 
-    res = requests.post(session.api_domain, json=step_info, headers=auth_header)
+    res = requests.post(session.env_conf['apiDomain'], json=step_info, headers=auth_header)
     if res.status_code == 200:
         payload = res.json(cls=ndjson.Decoder)
         return payload
     elif res.status_code == 401:
-        session = _login(session)
+        session = _login(session.user_name, session.env_conf)
         return _get_data(session, step_info)
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
