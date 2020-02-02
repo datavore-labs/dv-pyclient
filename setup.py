@@ -10,7 +10,8 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=7.0', 'ndjson==0.2.0', 'requests==2.22.0', 'pandas==1.0.0', 'numpy==1.18.1']
+requirements = ['Click>=7.0', 'ndjson==0.2.0', 'requests==2.22.0', 'pandas==1.0.0', 'numpy==1.18.1', 'jwt=0.6.1',
+                'PyJWT']
 
 setup_requirements = [ ]
 
@@ -48,6 +49,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/sanjayvenkat2000/dv_pyclient',
-    version='0.1.6',
+    version='0.1.7',
     zip_safe=False,
 )
