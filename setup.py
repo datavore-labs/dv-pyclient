@@ -10,8 +10,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=7.0', 'ndjson==0.2.0', 'requests==2.22.0', 'pandas==1.0.0', 'numpy==1.18.1', 'jwt=0.6.1',
-                'PyJWT']
+requirements = ['Click>=7.0', 'ndjson==0.2.0', 'requests==2.22.0', 'pandas==1.0.0', 'numpy==1.18.1', 'PyJWT==1.4.0']
 
 setup_requirements = [ ]
 
