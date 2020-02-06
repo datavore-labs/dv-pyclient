@@ -38,7 +38,7 @@ def df_empty(columns, dtypes, index=None):
     return df
 
 
-def load_df(lines_in):
+def _load_df(lines_in):
     key_columns, time_columns, value_columns, dtype = generate_meta(lines_in)
     df = df_empty(list(key_columns + time_columns + value_columns), dtype)
     for line in lines_in:
