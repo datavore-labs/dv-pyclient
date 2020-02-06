@@ -52,7 +52,10 @@ def _load_df(lines_in):
             base[time_key] = pd.to_datetime(data_point[0], unit='ms')
             base[value_key] = data_point[1]
             df = df.append(base, ignore_index=True)
-    return df
+    index_columns = list(key_columns + time_columns)
+    return df.pivot_table(
+        index=index_columns
+    ).reset_index()
 
 
 class Session:
