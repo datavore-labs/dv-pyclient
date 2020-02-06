@@ -3,6 +3,56 @@ import ndjson
 import requests
 import jwt
 import getpass
+import numpy as np
+import pandas as pd
+import copy
+
+
+def generate_meta(lines_in):
+    key_columns = []
+    time_columns = []
+    value_columns = []
+    dtype = []
+    for line in lines_in:
+        for key in line['keys']:
+            key_col_name = key['label']
+            if key_col_name not in key_columns:
+                key_columns.append(key_col_name)
+                dtype.append(np.str)
+        time_col_name = line['time']
+        if time_col_name not in time_columns:
+            time_columns.append(time_col_name)
+            dtype.append(np.int64)
+        value_col_name = line['value']
+        if value_col_name not in value_columns:
+            value_columns.append(value_col_name)
+            dtype.append(np.float64)
+    return key_columns, time_columns, value_columns, dtype
+
+
+def df_empty(columns, dtypes, index=None):
+    assert len(columns)==len(dtypes)
+    df = pd.DataFrame(index=index)
+    for c,d in zip(columns, dtypes):
+        df[c] = pd.Series(dtype=d)
+    return df
+
+
+def load_df(lines_in):
+    key_columns, time_columns, value_columns, dtype = generate_meta(lines_in)
+    df = df_empty(list(key_columns + time_columns + value_columns), dtype)
+    for line in lines_in:
+        row_keys = {}
+        time_key = line['time']
+        value_key = line['value']
+        for key in line['keys']:
+            row_keys[key['label']] = key['value']
+        for data_point in line['data']:
+            base = copy.copy(row_keys)
+            base[time_key] = pd.to_datetime(data_point[0], unit='ms')
+            base[value_key] = data_point[1]
+            df = df.append(base, ignore_index=True)
+    return df
 
 
 class Session:
@@ -68,4 +118,5 @@ def _get_data(session: Session, step_info=None):
         return _get_data(session, step_info)
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
+
 

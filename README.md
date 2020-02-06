@@ -8,3 +8,5 @@ python setup.py sdist
 python setup.py bdist_wheel
 
 twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
+
+See: https://gist.github.com/audreyr/5990987 for pypi release checklist
