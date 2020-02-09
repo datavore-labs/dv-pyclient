@@ -79,7 +79,7 @@ def _login(user_name=None, env_conf=None):
     password = getpass.getpass(prompt=f'Enter password for user {user_name} :')
 
     if user_name is not None and password is not None and env_conf is not None:
-        res = requests.get(env_conf['authDomain'], auth=(user_name, password))
+        res = requests.get(f'{env_conf["authDomain"]}/login', auth=(user_name, password))
         if res.status_code == 200:
             result_json = res.json()
             token = result_json['nextToken']
@@ -112,7 +112,7 @@ def _get_data(session: Session, step_info=None):
         'Content-type': 'application/json',
     }
 
-    res = requests.post(session.env_conf['apiDomain'], json=step_info, headers=auth_header)
+    res = requests.post(f'{session.env_conf["apiDomain"]}/get-lines', json=step_info, headers=auth_header)
     if res.status_code == 200:
         payload = res.json(cls=ndjson.Decoder)
         return payload
