@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/sanjayvenkat2000/dv_pyclient/issues.
+Report bugs at https://github.com/""/dv_pyclient/issues.
 
 If you are reporting a bug, please include:
 
@@ -38,14 +38,14 @@ and "help wanted" is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-Datavore Python Client could always use more documentation, whether as part of the
-official Datavore Python Client docs, in docstrings, or even on the web in blog posts,
+Python Client could always use more documentation, whether as part of the
+official Python Client docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/sanjayvenkat2000/dv_pyclient/issues.
+The best way to send feedback is to file an issue at https://github.com/""/dv_pyclient/issues.
 
 If you are proposing a feature:
 
@@ -103,7 +103,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 3. The pull request should work for Python 3.5, 3.6, 3.7 and 3.8, and for PyPy. Check
-   https://travis-ci.org/sanjayvenkat2000/dv_pyclient/pull_requests
+   https://travis-ci.com/""/dv_pyclient/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
 Tips
@@ -111,8 +111,8 @@ Tips
 
 To run a subset of tests::
 
+$ pytest tests.test_dv_pyclient
 
-    $ python -m unittest tests.test_dv_pyclient
 
 Deploying
 ---------

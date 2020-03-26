@@ -1,4 +1,5 @@
 """Main module."""
+
 import ndjson
 import requests
 import jwt
@@ -31,14 +32,14 @@ def generate_meta(lines_in):
 
 
 def df_empty(columns, dtypes, index=None):
-    assert len(columns)==len(dtypes)
+    assert len(columns) == len(dtypes)
     df = pd.DataFrame(index=index)
-    for c,d in zip(columns, dtypes):
+    for c, d in zip(columns, dtypes):
         df[c] = pd.Series(dtype=d)
     return df
 
 
-def _load_df(lines_in):
+def load_df(lines_in):
     key_columns, time_columns, value_columns, dtype = generate_meta(lines_in)
     df = df_empty(list(key_columns + time_columns + value_columns), dtype)
     for line in lines_in:
@@ -75,7 +76,7 @@ class Session:
         self.token = token
 
 
-def _login(user_name=None, env_conf=None):
+def login(user_name=None, env_conf=None):
     password = getpass.getpass(prompt=f'Enter password for user {user_name} :')
 
     if user_name is not None and password is not None and env_conf is not None:
@@ -95,7 +96,7 @@ def _login(user_name=None, env_conf=None):
         print("Requires username, password and data_config from Datavore UI")
 
 
-def _get_data(session: Session, step_info=None):
+def get_data(session: Session, step_info=None):
     """
     1. Make request using token.
     1a. if response is 200OK, return data as pandas frame
@@ -117,9 +118,7 @@ def _get_data(session: Session, step_info=None):
         payload = res.json(cls=ndjson.Decoder)
         return payload
     elif res.status_code == 401:
-        session = _login(session.user_name, session.env_conf)
-        return _get_data(session, step_info)
+        session = login(session.user_name, session.env_conf)
+        return get_data(session, step_info)
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
-
-

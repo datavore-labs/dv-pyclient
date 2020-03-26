@@ -1,4 +1,4 @@
-Welcome to Datavore Python Client's documentation!
+Welcome to Python Client's documentation!
 ======================================
 
 .. toctree::

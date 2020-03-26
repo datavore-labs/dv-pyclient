@@ -46,7 +46,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Datavore Python Client'
+project = 'Python Client'
 copyright = "2020, Datavore Labs"
 author = "Datavore Labs"
 
@@ -128,7 +128,7 @@ latex_elements = {
 # [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'dv_pyclient.tex',
-     'Datavore Python Client Documentation',
+     'Python Client Documentation',
      'Datavore Labs', 'manual'),
 ]
 
@@ -139,7 +139,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc, 'dv_pyclient',
-     'Datavore Python Client Documentation',
+     'Python Client Documentation',
      [author], 1)
 ]
 
@@ -151,7 +151,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'dv_pyclient',
-     'Datavore Python Client Documentation',
+     'Python Client Documentation',
      author,
      'dv_pyclient',
      'One line description of project.',
