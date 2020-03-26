@@ -3,6 +3,8 @@
 """Tests for `dv_pyclient` package."""
 
 import pytest
+import numpy as np
+import pandas as pd
 
 from click.testing import CliRunner
 
@@ -24,6 +26,18 @@ def test_content(response):
     """Sample pytest test function with the pytest fixture as an argument."""
     # from bs4 import BeautifulSoup
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
+
+
+def test_meta():
+    df = pd.DataFrame({'A': 1.,
+                       'B': pd.Timestamp('20130102'),
+                       'C': pd.Series(1, index=list(range(4)), dtype='float32'),
+                       'D': np.array([3] * 4, dtype='int32'),
+                       'E': pd.Categorical(["test", "train", "test", "train"]),
+                       'F': 'foo'})
+    result = dv_pyclient.generateCsvConfig(df, None, [], [])
+    print(result)
+    assert False
 
 
 def test_command_line_interface():

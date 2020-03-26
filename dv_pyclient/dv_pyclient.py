@@ -1,5 +1,6 @@
 """Main module."""
 
+import io
 import ndjson
 import requests
 import jwt
@@ -8,8 +9,14 @@ import numpy as np
 import pandas as pd
 import copy
 
+from pandas.core.dtypes.common import (
+    is_string_dtype,
+    is_numeric_dtype,
+    is_datetime64_any_dtype,
+)
 
-def generate_meta(lines_in):
+
+def __generate_meta(lines_in):
     key_columns = []
     time_columns = []
     value_columns = []
@@ -31,7 +38,7 @@ def generate_meta(lines_in):
     return key_columns, time_columns, value_columns, dtype
 
 
-def df_empty(columns, dtypes, index=None):
+def __df_empty(columns, dtypes, index=None):
     assert len(columns) == len(dtypes)
     df = pd.DataFrame(index=index)
     for c, d in zip(columns, dtypes):
@@ -39,9 +46,83 @@ def df_empty(columns, dtypes, index=None):
     return df
 
 
+def __getColumnType(dType):
+    if(is_numeric_dtype(dType)):
+        return 'Number'
+    if(is_string_dtype(dType)):
+        return 'String'
+    if(is_datetime64_any_dtype(dType)):
+        return 'Date'
+    raise Exception('Unsupprted dType: {}'.format(dType))
+
+
+def __csvFileSettings(columnConfigs):
+    return {
+        'filePath': '',
+        'delimiter': ',',
+        'lineSeparator': '\n',
+        'quote': '"',
+        'quoteEscape': '"',
+        'columnConfigs': columnConfigs,
+    }
+
+
+def __dataLoadMapping(keyColumns, valueModifiers, timeColumns, frequency, valueLabelColumn, timeTuples):
+    return {
+        'keyColumns': keyColumns,
+        'valueModifiers': valueModifiers,
+        'timeColumns': timeColumns,
+        'frequency': frequency,
+        'valueLabelColumn': valueLabelColumn,
+        'timeTuples': timeTuples,
+    }
+
+
+def __datasourceMeta(datasourceId, datasource, publisher, dataset):
+    return {
+        'DATA_SOURCE_ID': datasourceId,
+        'PUBLISHER': publisher,
+        'DATA_SOURCE': datasource,
+        'DATASET': dataset,
+        'readGroups': [],
+    }
+
+
+def generatePublishConfig(df, datasourceId, frequency, valueModifiers, valueLabelColumn):
+    columnConfigs = []
+    for name, dType in df.dtypes.items():
+        columnConfigs.append({
+            'name': name,
+            'type': __getColumnType(dType)
+        })
+    stringColumns = list(
+        filter(lambda c: c['type'] == 'String', columnConfigs))
+    keyColumns = list(filter(lambda s: not (
+        s in valueModifiers or s in valueModifiers), stringColumns))
+    timeColumns = list(filter(lambda c: c['type'] == 'Date', columnConfigs))
+    valueColumns = list(filter(lambda c: c['type'] == 'Number', columnConfigs))
+    timeTuples = []
+    for v in valueColumns:
+        for t in timeColumns:
+            timeTuples.append({'timeColumn': t, 'valueColumn': v})
+    csvConfig = {
+        'sourceSettings': __csvFileSettings(columnConfigs),
+        'mapping': __dataLoadMapping(
+            keyColumns=keyColumns,
+            valueModifiers=[],
+            timeColumns=timeColumns,
+            frequency=frequency,
+            valueLabelColumn=[],
+            timeTuples=timeTuples
+        ),
+        'datasource': __datasourceMeta('datasourceId', 'datasource', 'publisher', 'dataset'),
+    }
+    return csvConfig
+
+
 def load_df(lines_in):
-    key_columns, time_columns, value_columns, dtype = generate_meta(lines_in)
-    df = df_empty(list(key_columns + time_columns + value_columns), dtype)
+    key_columns, time_columns, value_columns, dtype = __generate_meta(lines_in)
+    df = __df_empty(list(key_columns + time_columns + value_columns), dtype)
     for line in lines_in:
         row_keys = {}
         time_key = line['time']
@@ -80,7 +161,8 @@ def login(user_name=None, env_conf=None):
     password = getpass.getpass(prompt=f'Enter password for user {user_name} :')
 
     if user_name is not None and password is not None and env_conf is not None:
-        res = requests.get(f'{env_conf["authDomain"]}/login', auth=(user_name, password))
+        res = requests.get(
+            f'{env_conf["authDomain"]}/login', auth=(user_name, password))
         if res.status_code == 200:
             result_json = res.json()
             token = result_json['nextToken']
@@ -113,12 +195,30 @@ def get_data(session: Session, step_info=None):
         'Content-type': 'application/json',
     }
 
-    res = requests.post(f'{session.env_conf["apiDomain"]}/get-lines', json=step_info, headers=auth_header)
+    res = requests.post(
+        f'{session.env_conf["apiDomain"]}/get-lines', json=step_info, headers=auth_header)
     if res.status_code == 200:
         payload = res.json(cls=ndjson.Decoder)
         return payload
     elif res.status_code == 401:
         session = login(session.user_name, session.env_conf)
         return get_data(session, step_info)
+    else:
+        raise Exception(res.status_code, res.content.decode('ascii'))
+
+
+def publish(session: Session, df):
+    auth_header = {
+        'Authorization': 'Bearer %s' % session.token,
+        'Content-type': 'application/json',
+    }
+    stream = io.StringIO()
+    df.to_csv(stream)
+    res = requests.post('', data=stream, headers=auth_header)
+    if res.status_code == 200:
+        return res.json(cls=ndjson.Decoder)
+    elif res.status_code == 401:
+        session = login(session.user_name, session.env_conf)
+        return publish(session, df)
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
