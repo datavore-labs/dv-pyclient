@@ -8,8 +8,17 @@ install dependencies. You should be in the folder that contains
 requirements_dev.txt
 
 ### Setup
-`pip install -r requirements_dev.txt`
-`make install`
+Make a virtual env in a directory outside the project dir
+```
+python -m venv /path-to-create-environment-in
+source /path-to-create-environment-in/bin/activate
+```
+
+Install deps
+```
+pip install -r requirements_dev.txt
+make install
+```
 
 ### Run locally
 `make test`
