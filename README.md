@@ -7,11 +7,12 @@ After you create your project, change directory to the project and
 install dependencies. You should be in the folder that contains
 requirements_dev.txt
 
+### Setup
 `pip install -r requirements_dev.txt`
+`make install`
 
 ### Run locally
-`make`
-
+`make test`
 
 ### Build a release
 Bump version if your are getting read to release a version. Note:  For development, just delete the `dist/*` 
