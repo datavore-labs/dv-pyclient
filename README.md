@@ -9,27 +9,26 @@ requirements_dev.txt
 
 `pip install -r requirements_dev.txt`
 
-### Run test locally
-`make test`
+### Run locally
+`make`
 
-Run make to see options
 
 ### Build a release
 Bump version if your are getting read to release a version. Note:  For development, just delete the `dist/*` 
 ```
-rm -rf dist/*
-bumpversion patch
-python setup.py sdist
-python setup.py bdist_wheel
+bumpversion patch 
 ```
+See bumpversion options
 
-### Test release
-`tok`
+### Develop locally
+`python setup.py develop`
+Will install the package for development.  Open a python shell, import dv_pyclient and use
 
 
 ### Install a release locally
 To install a release into your local environment use pip and point it to the build you want to install 
 ```python
+make dist
 pip install dist/dv_pyclient-XXX.tar.gz
 ```
 
