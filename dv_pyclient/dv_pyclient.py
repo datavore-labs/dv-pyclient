@@ -1,6 +1,7 @@
 """Main module."""
 
 import io
+import tempfile
 import ndjson
 import requests
 import jwt
@@ -46,19 +47,38 @@ def __df_empty(columns, dtypes, index=None):
     return df
 
 
-def __getColumnType(dType):
+def __getColumnTypeOptions(dType):
     if(is_numeric_dtype(dType)):
-        return 'Number'
+        return {
+            'dataType': 'NumberColumnConfig',
+        }
     if(is_string_dtype(dType)):
-        return 'String'
+        return {
+            'dataType': 'StringColumnConfig',
+        }
     if(is_datetime64_any_dtype(dType)):
-        return 'Date'
+        return {
+            "dateFormat": "ISO_DATE",
+            'dataType': 'TimeColumnConfig',
+        }
     raise Exception('Unsupprted dType: {}'.format(dType))
+
+
+def __getColumnConfigs(df):
+    columnConfigs = []
+    for name, dType in df.dtypes.items():
+        baseConfig = __getColumnTypeOptions(dType)
+        baseConfig.update({
+            'name': name,
+            'displayLabel': name,
+        })
+        columnConfigs.append(baseConfig)
+    return columnConfigs
 
 
 def __csvFileSettings(columnConfigs):
     return {
-        'filePath': '',
+        'filePath': 'from dataframe',
         'delimiter': ',',
         'lineSeparator': '\n',
         'quote': '"',
@@ -78,46 +98,53 @@ def __dataLoadMapping(keyColumns, valueModifiers, timeColumns, frequency, valueL
     }
 
 
-def __datasourceMeta(datasourceId, datasource, publisher, dataset):
+def __datasourceMeta(datasourceId, datasource, publisher, dataset, readGroups):
     return {
         'DATA_SOURCE_ID': datasourceId,
-        'PUBLISHER': publisher,
         'DATA_SOURCE': datasource,
+        'PUBLISHER': publisher,
         'DATASET': dataset,
-        'readGroups': [],
+        'readGroups': readGroups,
     }
 
 
-def __generateDataSourceLoaderConfig(df, datasourceId, frequency, valueModifiers, valueLabelColumn):
-    columnConfigs = []
-    for name, dType in df.dtypes.items():
-        columnConfigs.append({
-            'name': name,
-            'type': __getColumnType(dType)
-        })
+def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valueModifiers, valueLabelColumn):
+    columnConfigs = __getColumnConfigs(df)
     stringColumns = list(
-        filter(lambda c: c['type'] == 'String', columnConfigs))
+        filter(lambda c: c['dataType'] == 'StringColumnConfig', columnConfigs))
     keyColumns = list(filter(lambda s: not (
         s in valueModifiers or s in valueModifiers), stringColumns))
-    timeColumns = list(filter(lambda c: c['type'] == 'Date', columnConfigs))
-    valueColumns = list(filter(lambda c: c['type'] == 'Number', columnConfigs))
+    timeColumns = list(
+        filter(lambda c: c['dataType'] == 'TimeColumnConfig', columnConfigs))
+    valueColumns = list(
+        filter(lambda c: c['dataType'] == 'NumberColumnConfig', columnConfigs))
     timeTuples = []
     for v in valueColumns:
         for t in timeColumns:
-            timeTuples.append({'timeColumn': t, 'valueColumn': v})
+            timeTuples.append(
+                {'timeColumn': t['name'], 'valueColumn': v['name']})
     csvConfig = {
         'sourceSettings': __csvFileSettings(columnConfigs),
         'mapping': __dataLoadMapping(
-            keyColumns=keyColumns,
-            valueModifiers=[],
-            timeColumns=timeColumns,
+            keyColumns=list(map(lambda i: i['name'], keyColumns)),
+            timeColumns=list(map(lambda i: i['name'], timeColumns)),
+            valueLabelColumn=list(map(lambda i: i['name'], valueLabelColumn)),
+            valueModifiers=valueModifiers,
             frequency=frequency,
-            valueLabelColumn=[],
             timeTuples=timeTuples
         ),
-        'datasource': __datasourceMeta('datasourceId', 'datasource', 'publisher', 'dataset'),
+        'datasource': __datasourceMeta(dataSourceId, 'datasource', userName, 'dataset', []),
     }
-    return csvConfig
+    return {
+        'type': 'CsvDataLoaderConfig',
+        'dataSource': {
+            'docType': 'DataSource',
+            'id': dataSourceId,
+        },
+        'strategy': 'Overwrite',
+        'loaderConfig': csvConfig,
+        'inputs': {}
+    }
 
 
 def load_df(lines_in):
@@ -236,19 +263,22 @@ def __getPreSignedUrl(session: Session, dataSourceId):
         raise Exception(res.status_code, res.content.decode('ascii'))
 
 
-def publish(session: Session, dataSourceId, df):
-    loaderConfig = __generateDataSourceLoaderConfig()
+def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[], valueLabelColumn=[]):
+    loaderConfig = __generateDataSourceLoaderConfig(
+        df, session.user_name, dataSourceId, frequency, valueModifiers, valueLabelColumn)
     __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
-    uploadUrl = __getOneTimeUrl(session, dataSourceId)
+    uploadUrl = __getPreSignedUrl(session, dataSourceId)
 
     # Put data to the uploadUrl
-    stream = io.StringIO()
-    df.to_csv(stream)
-    res = requests.put(uploadUrl, data=stream)
-    if res.status_code == 200:
-        return res.json(cls=ndjson.Decoder)
-    elif res.status_code == 401:
-        session = login(session.user_name, session.env_conf)
-        return publish(session, df)
-    else:
-        raise Exception(res.status_code, res.content.decode('ascii'))
+    with tempfile.NamedTemporaryFile(mode='r+') as temp:
+        print(temp.name)
+        df.to_csv(temp.name, index=False)
+        res = requests.put(uploadUrl, data=open(temp.name))
+
+        if res.status_code == 200:
+            return res.text
+        elif res.status_code == 401:
+            session = login(session.user_name, session.env_conf)
+            return publish(session, dataSourceId, df, frequency, valueModifiers, valueLabelColumn)
+        else:
+            raise Exception(res.status_code, res.content.decode('ascii'))

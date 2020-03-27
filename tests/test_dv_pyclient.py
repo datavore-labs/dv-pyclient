@@ -26,6 +26,7 @@ def session():
     return dv_pyclient.login("JP Kosmyna", env_conf, password)
 
 
+@pytest.fixture
 def dataFrame():
     return pd.DataFrame({'A': 1.,
                          'B': pd.Timestamp('20130102'),
@@ -37,8 +38,8 @@ def dataFrame():
 
 def test___generateDataSourceLoaderConfig(dataFrame):
     result = dv_pyclient.__generateDataSourceLoaderConfig(
-        df, "dataSourceid", None, [], [])
-    # print(result)
+        dataFrame, "userName", "dataSourceid", None, [], [])
+    print(result)
     assert True
 
 
@@ -64,6 +65,12 @@ def test__setDataSourceLoaderConfig(session):
     }
     resp = dv_pyclient.__setDatasourceLoaderConfig(
         session, dataSourceId, emptyLoaderConfig)
+    assert resp.status_code == 200
+
+
+def test_publish(session, dataFrame):
+    dataSourceId = "72c221ff-703e-11ea-9c7f-1fc811f9ee94"
+    resp = dv_pyclient.publish(session, dataSourceId, dataFrame)
     assert resp.status_code == 200
 
 
