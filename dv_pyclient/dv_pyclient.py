@@ -88,7 +88,7 @@ def __datasourceMeta(datasourceId, datasource, publisher, dataset):
     }
 
 
-def generatePublishConfig(df, datasourceId, frequency, valueModifiers, valueLabelColumn):
+def __generateDataSourceLoaderConfig(df, datasourceId, frequency, valueModifiers, valueLabelColumn):
     columnConfigs = []
     for name, dType in df.dtypes.items():
         columnConfigs.append({
@@ -157,8 +157,10 @@ class Session:
         self.token = token
 
 
-def login(user_name=None, env_conf=None):
-    password = getpass.getpass(prompt=f'Enter password for user {user_name} :')
+def login(user_name=None, env_conf=None, password=None):
+    if password == None:
+        password = getpass.getpass(
+            prompt=f'Enter password for user {user_name} :')
 
     if user_name is not None and password is not None and env_conf is not None:
         res = requests.get(
@@ -196,7 +198,7 @@ def get_data(session: Session, step_info=None):
     }
 
     res = requests.post(
-        f'{session.env_conf["apiDomain"]}/get-lines', json=step_info, headers=auth_header)
+        f'{session.env_conf["apiDomain"]}/exec/get-lines', json=step_info, headers=auth_header)
     if res.status_code == 200:
         payload = res.json(cls=ndjson.Decoder)
         return payload
@@ -207,14 +209,33 @@ def get_data(session: Session, step_info=None):
         raise Exception(res.status_code, res.content.decode('ascii'))
 
 
-def publish(session: Session, df):
+def __setDatasourceLoaderConfig(session: Session, dataSourceId, loaderConfig):
+    None
+
+
+def __getPreSignedUrl(session: Session, dataSourceId):
     auth_header = {
         'Authorization': 'Bearer %s' % session.token,
         'Content-type': 'application/json',
     }
+    params = {'dataSourceId': dataSourceId, 'extension': '.csv'}
+    url = f'{session.env_conf["apiDomain"]}/server/dataload/csvUploadUrl'
+    res = requests.get(url, headers=auth_header, params=params)
+    if res.status_code == 200:
+        return res.json()['payload']['presignedUrl']
+    else:
+        raise Exception(res.status_code, res.content.decode('ascii'))
+
+
+def publish(session: Session, dataSourceId, df):
+    loaderConfig = __generateDataSourceLoaderConfig()
+    __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
+    uploadUrl = __getOneTimeUrl(session, dataSourceId)
+
+    # Put data to the uploadUrl
     stream = io.StringIO()
     df.to_csv(stream)
-    res = requests.post('', data=stream, headers=auth_header)
+    res = requests.put(uploadUrl, data=stream)
     if res.status_code == 200:
         return res.json(cls=ndjson.Decoder)
     elif res.status_code == 401:

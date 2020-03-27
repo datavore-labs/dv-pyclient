@@ -13,31 +13,38 @@ from dv_pyclient import cli
 
 
 @pytest.fixture
-def response():
+def session():
     """Sample pytest fixture.
 
     See more at: http://doc.pytest.org/en/latest/fixture.html
     """
-    # import requests
-    # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
+    password = "dummy password"
+    env_conf = {
+        'authDomain': 'https://dev.datavorelabs.com/auth',
+        'apiDomain': 'https://dev.datavorelabs.com'
+    }
+    return dv_pyclient.login("JP Kosmyna", env_conf, password)
 
 
-def test_content(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
-    # from bs4 import BeautifulSoup
-    # assert 'GitHub' in BeautifulSoup(response.content).title.string
-
-
-def test_meta():
+def test___generateDataSourceLoaderConfig():
     df = pd.DataFrame({'A': 1.,
                        'B': pd.Timestamp('20130102'),
                        'C': pd.Series(1, index=list(range(4)), dtype='float32'),
                        'D': np.array([3] * 4, dtype='int32'),
                        'E': pd.Categorical(["test", "train", "test", "train"]),
                        'F': 'foo'})
-    result = dv_pyclient.generateCsvConfig(df, None, [], [])
-    print(result)
-    assert False
+    result = dv_pyclient.__generateDataSourceLoaderConfig(
+        df, "dataSourceid", None, [], [])
+    # print(result)
+    assert True
+
+
+def test___getPreSignedUrl(session):
+    dataSourceId = "72c221ff-703e-11ea-9c7f-1fc811f9ee94"
+    presignedUrl = dv_pyclient.__getPreSignedUrl(
+        session, dataSourceId)
+    assert presignedUrl.startswith(
+        "http://dev-upload.datavorelabs.com:9000/dv-dev/dv-data-loader/uploads/"+dataSourceId)
 
 
 def test_command_line_interface():
