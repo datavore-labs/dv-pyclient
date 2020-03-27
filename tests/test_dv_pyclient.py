@@ -26,13 +26,16 @@ def session():
     return dv_pyclient.login("JP Kosmyna", env_conf, password)
 
 
-def test___generateDataSourceLoaderConfig():
-    df = pd.DataFrame({'A': 1.,
-                       'B': pd.Timestamp('20130102'),
-                       'C': pd.Series(1, index=list(range(4)), dtype='float32'),
-                       'D': np.array([3] * 4, dtype='int32'),
-                       'E': pd.Categorical(["test", "train", "test", "train"]),
-                       'F': 'foo'})
+def dataFrame():
+    return pd.DataFrame({'A': 1.,
+                         'B': pd.Timestamp('20130102'),
+                         'C': pd.Series(1, index=list(range(4)), dtype='float32'),
+                         'D': np.array([3] * 4, dtype='int32'),
+                         'E': pd.Categorical(["test", "train", "test", "train"]),
+                         'F': 'foo'})
+
+
+def test___generateDataSourceLoaderConfig(dataFrame):
     result = dv_pyclient.__generateDataSourceLoaderConfig(
         df, "dataSourceid", None, [], [])
     # print(result)
@@ -45,6 +48,23 @@ def test___getPreSignedUrl(session):
         session, dataSourceId)
     assert presignedUrl.startswith(
         "http://dev-upload.datavorelabs.com:9000/dv-dev/dv-data-loader/uploads/"+dataSourceId)
+
+
+def test__setDataSourceLoaderConfig(session):
+    dataSourceId = "72c221ff-703e-11ea-9c7f-1fc811f9ee94"
+    emptyLoaderConfig = {
+        'type': 'CsvDataLoaderConfig',
+        'dataSource': {
+            'docType': 'DataSource',
+            'id': dataSourceId,
+        },
+        'strategy': 'Overwrite',
+        'loaderConfig': {},
+        'inputs': {}
+    }
+    resp = dv_pyclient.__setDatasourceLoaderConfig(
+        session, dataSourceId, emptyLoaderConfig)
+    assert resp.status_code == 200
 
 
 def test_command_line_interface():
