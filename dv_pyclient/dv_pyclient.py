@@ -289,7 +289,7 @@ def __validateLoaderConfig(loaderConfig):
     if not mapping["timeTuples"]:
         raise Exception("Time tuples empty. No column loaded.")
 
-    True
+    return True
 
 def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[], valueLabelColumn=[]):
     # Cancel load if it exists

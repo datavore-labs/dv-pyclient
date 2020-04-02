@@ -67,6 +67,41 @@ def test__setDataSourceLoaderConfig(session):
         session, dataSourceId, emptyLoaderConfig)
     assert resp.status_code == 200
 
+def test__validateLoaderConfig_empty():
+    # No config
+    with pytest.raises(Exception) as e_info:
+        dv_pyclient.__validateLoaderConfig({})
+        assert str(e_info) == "Empty loader config"
+
+def test__validateLoaderConfig_noTime():
+    # No time columns
+    with pytest.raises(Exception) as e_info:
+        df = pd.DataFrame({})
+        dv_pyclient.__validateLoaderConfig(
+            dv_pyclient.__generateDataSourceLoaderConfig(df, "", "", None, [], [])
+        )
+        assert str(e_info) == "Loader config requires non-empty time columns."
+
+def test__validateLoaderConfig_noTuples():
+    # No time columns
+    with pytest.raises(Exception) as e_info:
+        df = pd.DataFrame({
+            'Date': pd.Timestamp('20130102')
+        })
+        dv_pyclient.__validateLoaderConfig(
+            dv_pyclient.__generateDataSourceLoaderConfig(df, "", "", None, [], [])
+        )
+        assert str(e_info) == "Time tuples empty. No column loaded."
+
+def test__validateLoaderConfig_valid():
+    # No time columns
+    df = pd.DataFrame({
+        'Date': pd.Timestamp('20130102'),
+        'Value': pd.Series(1, index=list(range(4)), dtype='float32')
+    })
+    assert dv_pyclient.__validateLoaderConfig(
+        dv_pyclient.__generateDataSourceLoaderConfig(df, "", "", None, [], [])
+    )
 
 def test_publish(session, dataFrame):
     dataSourceId = "72c221ff-703e-11ea-9c7f-1fc811f9ee94"
