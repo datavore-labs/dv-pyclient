@@ -275,12 +275,33 @@ def __cancelCurrentLoad(session: Session, dataSourceId):
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
 
+def __validateLoaderConfig(loaderConfig):
+    csvConfig = loaderConfig["loaderConfig"]
+    if not csvConfig:
+        raise Exception("Empty loader config")
+
+    # Check mapping
+    mapping = csvConfig["mapping"]
+    if not mapping["timeColumns"]:
+        raise Exception("Loader config requires non-empty time columns.")
+
+    # Check time tuples nonempty
+    if not mapping["timeTuples"]:
+        raise Exception("Time tuples empty. No column loaded.")
+
+    True
+
 def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[], valueLabelColumn=[]):
     # Cancel load if it exists
     __cancelCurrentLoad(session, dataSourceId)
+
+    # Generate + check config, set if passes
     loaderConfig = __generateDataSourceLoaderConfig(
         df, session.user_name, dataSourceId, frequency, valueModifiers, valueLabelColumn)
+    __validateLoaderConfig(loaderConfig)
     __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
+
+    # Generate upload url + run it
     uploadUrl = __getPreSignedUrl(session, dataSourceId)
 
     # Put data to the uploadUrl
