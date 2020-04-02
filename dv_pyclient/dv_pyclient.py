@@ -124,6 +124,7 @@ def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valu
             timeTuples.append(
                 {'timeColumn': t['name'], 'valueColumn': v['name']})
     csvConfig = {
+        'generated': True,
         'sourceSettings': __csvFileSettings(columnConfigs),
         'mapping': __dataLoadMapping(
             keyColumns=list(map(lambda i: i['name'], keyColumns)),
@@ -262,8 +263,21 @@ def __getPreSignedUrl(session: Session, dataSourceId):
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
 
+def __cancelCurrentLoad(session: Session, dataSourceId):
+    auth_header = {
+        'Authorization': 'Bearer %s' % session.token,
+        'Content-type': 'application/json',
+    }
+    url = f'{session.env_conf["apiDomain"]}/server/task/cancel/DATALOADER_{dataSourceId}'
+    res = requests.delete(url, headers=auth_header)
+    if res.status_code == 200:
+        return res.json()['payload']
+    else:
+        raise Exception(res.status_code, res.content.decode('ascii'))
 
 def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[], valueLabelColumn=[]):
+    # Cancel load if it exists
+    __cancelCurrentLoad(session, dataSourceId)
     loaderConfig = __generateDataSourceLoaderConfig(
         df, session.user_name, dataSourceId, frequency, valueModifiers, valueLabelColumn)
     __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
@@ -276,7 +290,7 @@ def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[
         res = requests.put(uploadUrl, data=open(temp.name))
 
         if res.status_code == 200:
-            return res.text
+            return res
         elif res.status_code == 401:
             session = login(session.user_name, session.env_conf)
             return publish(session, dataSourceId, df, frequency, valueModifiers, valueLabelColumn)
