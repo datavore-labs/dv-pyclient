@@ -285,9 +285,8 @@ def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[
 
     # Put data to the uploadUrl
     with tempfile.NamedTemporaryFile(mode='r+') as temp:
-        print(temp.name)
         df.to_csv(temp.name, index=False)
-        res = requests.put(uploadUrl, data=open(temp.name))
+        res = requests.put(uploadUrl, data=open(temp.name, mode='rb'))
 
         if res.status_code == 200:
             return res
