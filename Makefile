@@ -83,3 +83,7 @@ dist: clean ## builds source and wheel package
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
+
+install-proto:
+	python -m grpc_tools.protoc -Igrpc_setup --python_out=dv_pyclient/grpc --grpc_python_out=dv_pyclient/grpc grpc_setup/datavore/dataSources.proto
+	python -m grpc_tools.protoc -Igrpc_setup --python_out=dv_pyclient/grpc --grpc_python_out=dv_pyclient/grpc grpc_setup/scalapb/scalapb.proto

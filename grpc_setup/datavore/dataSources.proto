@@ -1,0 +1,166 @@
+syntax = "proto3";
+
+import "google/protobuf/wrappers.proto";
+import "scalapb/scalapb.proto";
+
+package com.datavorelabs.common.protos;
+
+// The RemoteDataSource service definition.
+service RemoteDataSource {
+
+  // Return a list of dataSources this remote service has
+  rpc ListDataSources (ListDataSourcesRequest) returns (ListDataSourcesReply) {}
+
+  // Return unique records for indexing into search
+  rpc dataSourceUniques (DataSourceUniquesRequest) returns (stream DataRecordsReply) {}
+
+  // Returns the meta needed to read the dataRecords as lines
+  rpc dataSourceMeta (DataSourceMetaRequest) returns (DataSourceMetaReply) {}
+
+  // Sends a list of lines to retrieve, and gets the dataRecords back
+  rpc dataSourceQuery (DataSourceQueryRequest) returns (stream DataRecordsReply) {}
+}
+
+message OptionalString {
+  option (scalapb.message).type = "scala.Option[String]";
+  google.protobuf.StringValue value = 1;
+}
+
+message OptionalNumber {
+  option (scalapb.message).type = "scala.Option[Double]";
+  google.protobuf.DoubleValue value = 1;
+}
+
+message OptionalTime {
+  option (scalapb.message).type = "scala.Option[Long]";
+  google.protobuf.Int64Value value = 1;
+}
+
+message DataRecord {
+  repeated OptionalString strings = 1 [(scalapb.field).collection_type="collection.mutable.ArrayBuffer"]; // Seq[Option[String]]
+  repeated OptionalNumber numbers = 2 [(scalapb.field).collection_type="collection.mutable.ArrayBuffer"]; // Seq[Option[Double]]
+  repeated OptionalTime times = 3 [(scalapb.field).collection_type="collection.mutable.ArrayBuffer"]; // Seq[Option[Int]]
+}
+message DataRecordsReply {
+  repeated DataRecord records = 1;
+}
+
+
+message ListDataSourcesRequest {}
+message DataSourceResult {
+  string id = 1;
+  string name = 2;
+}
+message ListDataSourcesReply {
+  repeated DataSourceResult dataSources = 1;
+}
+
+
+message DataSourceUniquesRequest {
+  string dataSourceId = 1;
+}
+
+message DataSourceMetaRequest {
+  string dataSourceId = 1;
+}
+
+enum PredicateModifier {
+  None = 0;
+  TimeModifier = 1;
+  ValueModifier = 2;
+}
+
+message StringColumnConfig {
+  string name = 1;
+  string displayLabel = 2;
+  PredicateModifier modifier = 3;
+  google.protobuf.StringValue ontology = 4;
+}
+
+message NumberColumnConfig {
+  string name = 1;
+  string displayLabel = 2;
+}
+
+message TimeColumnConfig {
+  string name = 1;
+  string displayLabel = 2;
+  string dateFormat = 3;
+}
+
+message StaticStringColumnConfig {
+  string name = 1;
+  string displayLabel = 2;
+  google.protobuf.StringValue value = 3;
+  PredicateModifier modifier = 4;
+  google.protobuf.StringValue ontology = 5;
+}
+
+message StaticNumberColumnConfig {
+  string name = 1;
+  string displayLabel = 2;
+  google.protobuf.DoubleValue value = 3;
+}
+
+message StaticTimeColumnConfig {
+  string name = 1;
+  string displayLabel = 2;
+  google.protobuf.Int64Value value = 3;
+}
+
+message ColumnConfig {
+	oneof columnConfig {
+		StringColumnConfig stringColumnConfig = 1;
+		NumberColumnConfig numberColumnConfig = 2;
+		TimeColumnConfig timeColumnConfig = 3;
+		StaticStringColumnConfig staticStringColumnConfig = 4;
+		StaticNumberColumnConfig staticNumberColumnConfig = 5;
+		StaticTimeColumnConfig staticTimeColumnConfig = 6;
+	}
+}
+
+message TimeTupleConfig {
+  string timeColumn = 1;
+  string valueColumn = 2;
+}
+message DataLoadMapping {
+  repeated string keyColumns = 1; // Seq[String]
+  // Columns to load as key but identify as ValueModifier
+  repeated string valueModifiers =2; // Seq[String]
+
+  // First time column that is guarantee to be sorted.
+  // For other times in timeTuples, we cannot guarantee time ordering.
+  // the implementations must sort times before publishing data.
+  // The timeColumns head record is guaranteed to be sorted.
+  repeated string timeColumns = 3; // Seq[String]
+
+  // Other generic configuration for this batch of line
+  // for now, we freeze value modifier columns for the batch
+  //  this provides for easier batching logic.  Does not have to be the case
+  google.protobuf.StringValue frequency = 4; // Option[String]
+
+  // Set of columns that inform us how to generate predicate labels for values
+  repeated string valueLabelColumn = 5; // Seq[String] @todo: is this supposed to be option of string?
+
+  repeated TimeTupleConfig timeTuples = 6;
+}
+message DataSourceMetaReply {
+  string dataSourceId = 1;
+  string dataSourceName = 2;
+  repeated ColumnConfig columnConfigs = 3;
+  DataLoadMapping dataLoadMapping = 4;
+}
+
+message LineDefinition {
+  // Data predicates
+  repeated string keyPredicateIds = 1;
+  repeated OptionalString keyPath = 2; // Option[String]
+  string timePredicateId = 3;
+  string valuePredicateId = 4;
+  google.protobuf.StringValue frequency = 5; // Option[String]
+  string dataSourceId = 6;
+}
+
+message DataSourceQueryRequest {
+  repeated LineDefinition lines = 1;
+}
