@@ -108,13 +108,16 @@ def __datasourceMeta(datasourceId, datasource, publisher, dataset, readGroups):
     }
 
 def __isTimeDataType(dataType):
-    return dataType == 'TimeColumnConfig' or dataType == 'StaticTimeConfig'
+    return dataType in frozenset(['TimeColumnConfig', 'StaticTimeConfig'])
 
 def __isStringDataType(dataType):
-    return dataType == 'StringColumnConfig' or dataType == 'StaticStringConfig'
+    return dataType in frozenset(['StringColumnConfig', 'StaticStringConfig'])
 
 def __isNumberDataType(dataType):
-    return dataType == 'NumberColumnConfig' or dataType == 'StaticNumberConfig'
+    return dataType in frozenset(['NumberColumnConfig', 'StaticNumberConfig'])
+
+def __isStaticDataType(dataType):
+    return dataType in frozenset(['StaticTimeConfig', 'StaticStringConfig', 'StaticNumberConfig'])
 
 def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valueModifiers, valueLabelColumn, sampleData=None, columnSamples=None):
     columnConfigs = __getColumnConfigs(df)
@@ -293,6 +296,10 @@ def __cancelCurrentLoad(session: Session, dataSourceId):
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
 
+def __getColumnsByName(columnConfigs):
+    return dict(
+        map(lambda x: (x['name'], x), columnConfigs)
+    )
 
 def __validateLoaderConfig(loaderConfig, df=None):
     csvConfig = loaderConfig['loaderConfig']
@@ -308,15 +315,14 @@ def __validateLoaderConfig(loaderConfig, df=None):
     if not mapping['timeTuples']:
         raise Exception('Time tuples empty. No column loaded.')
 
-    columnByName = dict(
-        map(
-            lambda x: (x['name'], x),
-            csvConfig['sourceSettings']['columnConfigs']
-        )
-    )
+    columnByName = __getColumnsByName(csvConfig['sourceSettings']['columnConfigs'])
+
+    # Collectors for referenced cols
+    requiredFields = set()
 
     # Check all columns are correct types and all are defined
     for field in mapping['keyColumns']:
+        requiredFields.add(field)
         if not columnByName[field]:
             raise Exception(f'key column {field} not found.')
 
@@ -326,6 +332,7 @@ def __validateLoaderConfig(loaderConfig, df=None):
 
     # Check all value label are correct types and all are defined
     for field in mapping['valueLabelColumn']:
+        requiredFields.add(field)
         if not columnByName[field]:
             raise Exception(f'value label {field} not found.')
 
@@ -335,6 +342,7 @@ def __validateLoaderConfig(loaderConfig, df=None):
 
     # Check all time columns label are correct types and all are defined
     for field in mapping['timeColumns']:
+        requiredFields.add(field)
         if not columnByName[field]:
             raise Exception(f'time column {field} not found.')
 
@@ -344,6 +352,9 @@ def __validateLoaderConfig(loaderConfig, df=None):
 
     # Check all time tuples
     for timeTuple in mapping['timeTuples']:
+        requiredFields.add(timeTuple['timeColumn'])
+        requiredFields.add(timeTuple['valueColumn'])
+
         if not columnByName[timeTuple['timeColumn']]:
             raise Exception(f'time column in tuple {str(timeTuple)} not found.')
 
@@ -357,6 +368,17 @@ def __validateLoaderConfig(loaderConfig, df=None):
         valueType = columnByName[timeTuple['valueColumn']]['dataType']
         if not __isNumberDataType(valueType):
             raise Exception(f'value column in tuple {str(timeTuple)} must be a number, got {valueType}.')
+
+    # Check data frame fields and types
+    if df:
+        dfColumnsByName = __getColumnsByName(__getColumnConfigs(df))
+        for keyField in filter(lambda x: not __isStaticDataType(columnByName[x]['dataType']), requiredFields):
+            requiredType = columnByName[keyField]['dataType']
+            if not dfColumnsByName[keyField]:
+                raise Exception(f'data frame missing required field: {keyField} of type: {requiredType}')
+
+            if dfColumnsByName[keyField]['dataType'] != requiredType:
+                raise Exception(f'data frame field {keyField} must be of type {requiredType}. Got {dfColumnsByName[keyField]["dataType"]}')
 
     return True
 
