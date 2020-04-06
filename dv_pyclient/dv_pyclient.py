@@ -302,17 +302,17 @@ def __getColumnsByName(columnConfigs):
     )
 
 def __validateLoaderConfig(loaderConfig, df=None):
-    csvConfig = loaderConfig['loaderConfig']
+    csvConfig = loaderConfig.get('loaderConfig')
     if not csvConfig:
         raise Exception('Empty loader config')
 
     # Check mapping
-    mapping = csvConfig['mapping']
-    if not mapping['timeColumns']:
+    mapping = csvConfig.get('mapping')
+    if not mapping.get('timeColumns'):
         raise Exception('Loader config requires non-empty time columns.')
 
     # Check time tuples nonempty
-    if not mapping['timeTuples']:
+    if not mapping.get('timeTuples'):
         raise Exception('Time tuples empty. No column loaded.')
 
     columnByName = __getColumnsByName(csvConfig['sourceSettings']['columnConfigs'])
@@ -323,7 +323,7 @@ def __validateLoaderConfig(loaderConfig, df=None):
     # Check all columns are correct types and all are defined
     for field in mapping['keyColumns']:
         requiredFields.add(field)
-        if not columnByName[field]:
+        if not columnByName.get(field):
             raise Exception(f'key column {field} not found.')
 
         fieldType = columnByName[field]['dataType']
@@ -333,7 +333,7 @@ def __validateLoaderConfig(loaderConfig, df=None):
     # Check all value label are correct types and all are defined
     for field in mapping['valueLabelColumn']:
         requiredFields.add(field)
-        if not columnByName[field]:
+        if not columnByName.get(field):
             raise Exception(f'value label {field} not found.')
 
         fieldType = columnByName[field]['dataType']
@@ -343,7 +343,7 @@ def __validateLoaderConfig(loaderConfig, df=None):
     # Check all time columns label are correct types and all are defined
     for field in mapping['timeColumns']:
         requiredFields.add(field)
-        if not columnByName[field]:
+        if not columnByName.get(field):
             raise Exception(f'time column {field} not found.')
 
         fieldType = columnByName[field]['dataType']
@@ -355,26 +355,26 @@ def __validateLoaderConfig(loaderConfig, df=None):
         requiredFields.add(timeTuple['timeColumn'])
         requiredFields.add(timeTuple['valueColumn'])
 
-        if not columnByName[timeTuple['timeColumn']]:
+        if not columnByName.get(timeTuple['timeColumn']):
             raise Exception(f'time column in tuple {str(timeTuple)} not found.')
 
         timeType = columnByName[timeTuple['timeColumn']]['dataType']
         if not __isTimeDataType(timeType):
             raise Exception(f'time column in tuple {str(timeTuple)} must be a time, got {timeType}.')
 
-        if not columnByName[timeTuple['valueColumn']]:
+        if not columnByName.get(timeTuple['valueColumn']):
             raise Exception(f'value column in tuple {str(timeTuple)} not found.')
 
-        valueType = columnByName[timeTuple['valueColumn']]['dataType']
+        valueType = columnByName.get(timeTuple['valueColumn'])['dataType']
         if not __isNumberDataType(valueType):
             raise Exception(f'value column in tuple {str(timeTuple)} must be a number, got {valueType}.')
 
     # Check data frame fields and types
-    if df:
+    if not df is None:
         dfColumnsByName = __getColumnsByName(__getColumnConfigs(df))
         for keyField in filter(lambda x: not __isStaticDataType(columnByName[x]['dataType']), requiredFields):
             requiredType = columnByName[keyField]['dataType']
-            if not dfColumnsByName[keyField]:
+            if not dfColumnsByName.get(keyField):
                 raise Exception(f'data frame missing required field: {keyField} of type: {requiredType}')
 
             if dfColumnsByName[keyField]['dataType'] != requiredType:

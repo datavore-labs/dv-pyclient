@@ -3,6 +3,7 @@
 """Tests for `dv_pyclient` package."""
 
 import pytest
+import copy
 import numpy as np
 import pandas as pd
 
@@ -73,7 +74,7 @@ def test__validateLoaderConfig_empty():
     # No config
     with pytest.raises(Exception) as e_info:
         dv_pyclient.__validateLoaderConfig({})
-        assert str(e_info) == "Empty loader config"
+    assert "Empty loader config" in str(e_info)
 
 
 def test__validateLoaderConfig_noTime():
@@ -84,30 +85,49 @@ def test__validateLoaderConfig_noTime():
             dv_pyclient.__generateDataSourceLoaderConfig(
                 df, "", "", None, [], [])
         )
-        assert str(e_info) == "Loader config requires non-empty time columns."
+    assert "Loader config requires non-empty time columns." in str(e_info)
 
 
 def test__validateLoaderConfig_noTuples():
     # No time columns
     with pytest.raises(Exception) as e_info:
         df = pd.DataFrame({
+            'String': pd.Categorical(["a", "a", "b", "a"]),
             'Date': pd.Timestamp('20130102')
         })
         dv_pyclient.__validateLoaderConfig(
             dv_pyclient.__generateDataSourceLoaderConfig(
                 df, "", "", None, [], [])
         )
-        assert str(e_info) == "Time tuples empty. No column loaded."
+    assert "Time tuples empty. No column loaded." in str(e_info)
 
+def test__validateLoaderConfig_configTypeCheck():
+    df = pd.DataFrame({
+        'String': pd.Categorical(["a", "a", "b", "a"]),
+        'Date': pd.Timestamp('20130102'),
+        'Value': np.array([3] * 4, dtype='int32')
+    })
+    baseConfig = dv_pyclient.__generateDataSourceLoaderConfig(df, "", "", None, [], [])
+
+    # all keyColumns defined
+    with pytest.raises(Exception) as e_info:
+        local = copy.deepcopy(baseConfig)
+        del local["loaderConfig"]["sourceSettings"]["columnConfigs"][0]
+        dv_pyclient.__validateLoaderConfig(local)
+    assert "key column String not found" in str(e_info)
+
+def test__validateLoaderConfig_dataFrameTypeCheck():
+    assert True
 
 def test__validateLoaderConfig_valid():
-    # No time columns
+    # Completely valid config
     df = pd.DataFrame({
         'Date': pd.Timestamp('20130102'),
-        'Value': pd.Series(1, index=list(range(4)), dtype='float32')
+        'Value': np.array([3] * 4, dtype='int32')
     })
     assert dv_pyclient.__validateLoaderConfig(
-        dv_pyclient.__generateDataSourceLoaderConfig(df, "", "", None, [], [])
+        dv_pyclient.__generateDataSourceLoaderConfig(df, "", "", None, [], []),
+        df
     )
 
 
