@@ -328,7 +328,7 @@ def __validateLoaderConfig(loaderConfig, df=None):
 
         fieldType = columnByName[field]['dataType']
         if not __isStringDataType(fieldType):
-            raise Exception(f'keycolumn {field} must be a string, got {fieldType}.')
+            raise Exception(f'key column {field} must be a string, got {fieldType}.')
 
     # Check all value label are correct types and all are defined
     for field in mapping['valueLabelColumn']:

@@ -89,7 +89,7 @@ def test__validateLoaderConfig_noTime():
 
 
 def test__validateLoaderConfig_noTuples():
-    # No time columns
+    # No time/value tuples
     with pytest.raises(Exception) as e_info:
         df = pd.DataFrame({
             'String': pd.Categorical(['a', 'a', 'b', 'a']),
@@ -100,6 +100,7 @@ def test__validateLoaderConfig_noTuples():
                 df, '', '', None, [], [])
         )
     assert 'Time tuples empty. No column loaded.' in str(e_info)
+
 
 def test__validateLoaderConfig_configTypeCheck():
     df = pd.DataFrame({
@@ -112,12 +113,101 @@ def test__validateLoaderConfig_configTypeCheck():
     # all keyColumns defined
     with pytest.raises(Exception) as e_info:
         local = copy.deepcopy(baseConfig)
-        del local['loaderConfig']['sourceSettings']['columnConfigs'][0]
+        local['loaderConfig']['mapping']['keyColumns'] = ['NotAField']
         dv_pyclient.__validateLoaderConfig(local)
-    assert 'key column String not found' in str(e_info)
+    assert 'key column NotAField not found' in str(e_info)
+
+    # all keyColumns are strings
+    with pytest.raises(Exception) as e_info:
+        local = copy.deepcopy(baseConfig)
+        local['loaderConfig']['mapping']['keyColumns'] = ['Date']
+        dv_pyclient.__validateLoaderConfig(local)
+    assert 'key column Date must be a string' in str(e_info)
+
+    # all valueLabelColumn are defined
+    with pytest.raises(Exception) as e_info:
+        local = copy.deepcopy(baseConfig)
+        local['loaderConfig']['mapping']['valueLabelColumn'] = ['NotAField']
+        dv_pyclient.__validateLoaderConfig(local)
+    assert 'value label NotAField not found' in str(e_info)
+
+    # all valueLabelColumn are strings
+    with pytest.raises(Exception) as e_info:
+        local = copy.deepcopy(baseConfig)
+        local['loaderConfig']['mapping']['valueLabelColumn'] = ['Date']
+        dv_pyclient.__validateLoaderConfig(local)
+    assert 'value label Date must be a string' in str(e_info)
+
+    # all timeColumns are defined
+    with pytest.raises(Exception) as e_info:
+        local = copy.deepcopy(baseConfig)
+        local['loaderConfig']['mapping']['timeColumns'] = ['NotAField']
+        dv_pyclient.__validateLoaderConfig(local)
+    assert 'time column NotAField not found' in str(e_info)
+
+    # all timeColumns are time
+    with pytest.raises(Exception) as e_info:
+        local = copy.deepcopy(baseConfig)
+        local['loaderConfig']['mapping']['timeColumns'] = ['String']
+        dv_pyclient.__validateLoaderConfig(local)
+    assert 'time column String must be a time' in str(e_info)
+
+    # all timeTuples times are defined
+    with pytest.raises(Exception) as e_info:
+        local = copy.deepcopy(baseConfig)
+        local['loaderConfig']['mapping']['timeTuples'][0]['timeColumn'] = 'NotAField'
+        dv_pyclient.__validateLoaderConfig(local)
+    assert 'not found' in str(e_info)
+
+    # all timeTuples times are time
+    with pytest.raises(Exception) as e_info:
+        local = copy.deepcopy(baseConfig)
+        local['loaderConfig']['mapping']['timeTuples'][0]['timeColumn'] = 'String'
+        dv_pyclient.__validateLoaderConfig(local)
+    assert 'must be a time' in str(e_info)
+
+    # all timeTuples values are defined
+    with pytest.raises(Exception) as e_info:
+        local = copy.deepcopy(baseConfig)
+        local['loaderConfig']['mapping']['timeTuples'][0]['valueColumn'] = 'NotAField'
+        dv_pyclient.__validateLoaderConfig(local)
+    assert 'not found' in str(e_info)
+
+    # all timeTuples values are Number
+    with pytest.raises(Exception) as e_info:
+        local = copy.deepcopy(baseConfig)
+        local['loaderConfig']['mapping']['timeTuples'][0]['valueColumn'] = 'String'
+        dv_pyclient.__validateLoaderConfig(local)
+    assert 'must be a number' in str(e_info)
+
 
 def test__validateLoaderConfig_dataFrameTypeCheck():
-    assert True
+    df = pd.DataFrame({
+        'String': pd.Categorical(['a', 'a', 'b', 'a']),
+        'Date': pd.Timestamp('20130102'),
+        'Value': np.array([3] * 4, dtype='int32')
+    })
+    config = dv_pyclient.__generateDataSourceLoaderConfig(df, '', '', None, [], [])
+
+    # Each referenced col must exist in the data frame
+    with pytest.raises(Exception) as e_info:
+        noDateFrame = pd.DataFrame({
+            'String': pd.Categorical(['a', 'a', 'b', 'a']),
+            'Value': np.array([3] * 4, dtype='int32')
+        })
+        dv_pyclient.__validateLoaderConfig(config, noDateFrame)
+    assert 'data frame missing required field: Date' in str(e_info)
+
+    # Each referenced col must be the correct type
+    with pytest.raises(Exception) as e_info:
+        wrongTypeFrame = pd.DataFrame({
+            'String': pd.Timestamp('20130102'),
+            'Date': pd.Timestamp('20130102'),
+            'Value': np.array([3] * 4, dtype='int32')
+        })
+        dv_pyclient.__validateLoaderConfig(config, wrongTypeFrame)
+    assert 'ata frame field String must be of type StringColumnConfig.' in str(e_info)
+
 
 def test__validateLoaderConfig_valid():
     # Completely valid config
