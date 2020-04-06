@@ -1,4 +1,4 @@
-"""Main module."""
+'''Main module.'''
 
 import io
 import tempfile
@@ -58,10 +58,10 @@ def __getColumnTypeOptions(dType):
         }
     if(is_datetime64_any_dtype(dType)):
         return {
-            "dateFormat": "ISO_DATE",
+            'dateFormat': 'ISO_DATE',
             'dataType': 'TimeColumnConfig',
         }
-    raise Exception('Unsupprted dType: {}'.format(dType))
+    raise Exception(f'Unsupprted dType: {dType}')
 
 
 def __getColumnConfigs(df):
@@ -81,8 +81,8 @@ def __csvFileSettings(columnConfigs):
         'filePath': 'from dataframe',
         'delimiter': ',',
         'lineSeparator': '\n',
-        'quote': '"',
-        'quoteEscape': '"',
+        'quote': ''',
+        'quoteEscape': ''',
         'columnConfigs': columnConfigs,
     }
 
@@ -159,10 +159,10 @@ def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valu
 
 
 def load_df(lines_in):
-    """
+    '''
     Load lines into a dataframe
     Returns a DataFrame
-    """
+    '''
     key_columns, time_columns, value_columns, dtype = __generate_meta(lines_in)
     df = __df_empty(list(key_columns + time_columns + value_columns), dtype)
     for line in lines_in:
@@ -200,9 +200,9 @@ class Session:
 
 
 def login(user_name=None, env_conf=None, password=None):
-    """
+    '''
     Returns a valid datavore Session object
-    """
+    '''
     if password == None:
         password = getpass.getpass(
             prompt=f'Enter password for user {user_name} :')
@@ -222,11 +222,11 @@ def login(user_name=None, env_conf=None, password=None):
         else:
             raise Exception(res.status_code, res.content.decode('ascii'))
     else:
-        print("Requires username, password and data_config from Datavore UI")
+        print('Requires username, password and data_config from Datavore UI')
 
 
 def get_data(session: Session, step_info=None):
-    """
+    '''
     1. Make request using token.
     1a. if response is 200OK, return data as pandas frame
     1b. if response 401Unauthorized try login and return data frame
@@ -236,7 +236,7 @@ def get_data(session: Session, step_info=None):
     :param session:
     :param step_info: Some JSON to post
     :return:
-    """
+    '''
     auth_header = {
         'Authorization': 'Bearer %s' % session.token,
         'Content-type': 'application/json',
@@ -295,68 +295,68 @@ def __cancelCurrentLoad(session: Session, dataSourceId):
 
 
 def __validateLoaderConfig(loaderConfig, df=None):
-    csvConfig = loaderConfig["loaderConfig"]
+    csvConfig = loaderConfig['loaderConfig']
     if not csvConfig:
-        raise Exception("Empty loader config")
+        raise Exception('Empty loader config')
 
     # Check mapping
-    mapping = csvConfig["mapping"]
-    if not mapping["timeColumns"]:
-        raise Exception("Loader config requires non-empty time columns.")
+    mapping = csvConfig['mapping']
+    if not mapping['timeColumns']:
+        raise Exception('Loader config requires non-empty time columns.')
 
     # Check time tuples nonempty
-    if not mapping["timeTuples"]:
-        raise Exception("Time tuples empty. No column loaded.")
+    if not mapping['timeTuples']:
+        raise Exception('Time tuples empty. No column loaded.')
 
     columnByName = dict(
         map(
-            lambda x: (x["name"], x),
-            csvConfig["sourceSettings"]["columnConfigs"]
+            lambda x: (x['name'], x),
+            csvConfig['sourceSettings']['columnConfigs']
         )
     )
 
     # Check all columns are correct types and all are defined
-    for field in mapping["keyColumns"]:
+    for field in mapping['keyColumns']:
         if not columnByName[field]:
-            raise Exception('key column {} not found.'.format(field))
+            raise Exception(f'key column {field} not found.')
 
-        fieldType = columnByName[field]["dataType"]
+        fieldType = columnByName[field]['dataType']
         if not __isStringDataType(fieldType):
-            raise Exception('keycolumn {} must be a string, got {}.'.format(field, fieldType))
+            raise Exception(f'keycolumn {field} must be a string, got {fieldType}.')
 
     # Check all value label are correct types and all are defined
-    for field in mapping["valueLabelColumn"]:
+    for field in mapping['valueLabelColumn']:
         if not columnByName[field]:
-            raise Exception('value label {} not found.'.format(field))
+            raise Exception(f'value label {field} not found.')
 
-        fieldType = columnByName[field]["dataType"]
+        fieldType = columnByName[field]['dataType']
         if not __isStringDataType(fieldType):
-            raise Exception('value label {} must be a string, got {}.'.format(field, fieldType))
+            raise Exception(f'value label {field} must be a string, got {fieldType}.')
 
     # Check all time columns label are correct types and all are defined
-    for field in mapping["timeColumns"]:
+    for field in mapping['timeColumns']:
         if not columnByName[field]:
-            raise Exception('time column {} not found.'.format(field))
+            raise Exception(f'time column {field} not found.')
 
-        fieldType = columnByName[field]["dataType"]
+        fieldType = columnByName[field]['dataType']
         if not __isTimeDataType(fieldType):
-            raise Exception('time column {} must be a time, got {}.'.format(field, fieldType))
+            raise Exception(f'time column {field} must be a time, got {fieldType}.')
 
     # Check all time tuples
-    for timeTuple in mapping["timeTuples"]:
-        if not columnByName[timeTuple["timeColumn"]]:
-            raise Exception('time column in tuple {} not found.'.format(str(timeTuple)))
+    for timeTuple in mapping['timeTuples']:
+        if not columnByName[timeTuple['timeColumn']]:
+            raise Exception(f'time column in tuple {str(timeTuple)} not found.')
 
-        timeType = columnByName[timeTuple["timeColumn"]]["dataType"]
+        timeType = columnByName[timeTuple['timeColumn']]['dataType']
         if not __isTimeDataType(timeType):
-            raise Exception('time column in tuple {} must be a time, got {}.'.format(str(timeTuple), timeType))
+            raise Exception(f'time column in tuple {str(timeTuple)} must be a time, got {timeType}.')
 
-        if not columnByName[timeTuple["valueColumn"]]:
-            raise Exception('value column in tuple {} not found.'.format(str(timeTuple)))
+        if not columnByName[timeTuple['valueColumn']]:
+            raise Exception(f'value column in tuple {str(timeTuple)} not found.')
 
-        valueType = columnByName[timeTuple["valueColumn"]]["dataType"]
+        valueType = columnByName[timeTuple['valueColumn']]['dataType']
         if not __isNumberDataType(valueType):
-            raise Exception('value column in tuple {} must be a number, got {}.'.format(str(timeTuple), valueType))
+            raise Exception(f'value column in tuple {str(timeTuple)} must be a number, got {valueType}.')
 
     return True
 
@@ -413,8 +413,8 @@ def __getDataFrameSample(df):
         columnSamples[c] = list(map(str, df[c].unique()))[:25]
 
     return {
-        "sampleData": sampleData.values.tolist(),
-        "columnSamples": columnSamples
+        'sampleData': sampleData.values.tolist(),
+        'columnSamples': columnSamples
     }
 
 
