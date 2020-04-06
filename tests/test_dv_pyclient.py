@@ -21,7 +21,8 @@ def session():
     password = "dummy password"
     env_conf = {
         'authDomain': 'https://dev.datavorelabs.com/auth',
-        'apiDomain': 'https://dev.datavorelabs.com'
+        'apiDomain': 'https://dev.datavorelabs.com/server',
+        'execDomain': 'https://dev.datavorelabs.com/exec'
     }
     return dv_pyclient.login("JP Kosmyna", env_conf, password)
 

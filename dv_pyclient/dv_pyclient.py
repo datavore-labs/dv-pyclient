@@ -233,7 +233,7 @@ def get_data(session: Session, step_info=None):
     }
 
     res = requests.post(
-        f'{session.env_conf["apiDomain"]}/exec/get-lines', json=step_info, headers=auth_header)
+        f'{session.env_conf["execDomain"]}/get-lines', json=step_info, headers=auth_header)
     if res.status_code == 200:
         payload = res.json(cls=ndjson.Decoder)
         return payload
@@ -249,7 +249,7 @@ def __setDatasourceLoaderConfig(session: Session, dataSourceId, loaderConfig):
         'Authorization': 'Bearer %s' % session.token,
         'Content-type': 'application/json',
     }
-    url = f'{session.env_conf["apiDomain"]}/server/txns/datasource/{dataSourceId}/loader'
+    url = f'{session.env_conf["apiDomain"]}/txns/datasource/{dataSourceId}/loader'
     res = requests.post(url, headers=auth_header, json=loaderConfig)
     if res.status_code == 200:
         return res
@@ -263,7 +263,7 @@ def __getPreSignedUrl(session: Session, dataSourceId):
         'Content-type': 'application/json',
     }
     params = {'dataSourceId': dataSourceId, 'extension': '.csv'}
-    url = f'{session.env_conf["apiDomain"]}/server/dataload/csvUploadUrl'
+    url = f'{session.env_conf["apiDomain"]}/dataload/csvUploadUrl'
     res = requests.get(url, headers=auth_header, params=params)
     if res.status_code == 200:
         return res.json()['payload']['presignedUrl']
@@ -276,7 +276,7 @@ def __cancelCurrentLoad(session: Session, dataSourceId):
         'Authorization': 'Bearer %s' % session.token,
         'Content-type': 'application/json',
     }
-    url = f'{session.env_conf["apiDomain"]}/server/task/cancel/DATALOADER_{dataSourceId}'
+    url = f'{session.env_conf["apiDomain"]}/task/cancel/DATALOADER_{dataSourceId}'
     res = requests.delete(url, headers=auth_header)
     if res.status_code == 200:
         return res.json()['payload']
@@ -364,5 +364,5 @@ def setDataSourceSample(session: Session, dataSourceId, df):
     # get distinct column data
     # set dataSource sample
     # return url to configure dataSource
-    dataSourceEditUrl = f'{session.env_conf["apiDomain"]}/txns/#/datasource/{dataSourceId}'
+    dataSourceEditUrl = f'{session.env_conf["apiDomain"].replace("/server","/txns")}/txns/#/datasource/{dataSourceId}'
     dataSourceEditUrl
