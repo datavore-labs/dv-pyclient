@@ -107,17 +107,25 @@ def __datasourceMeta(datasourceId, datasource, publisher, dataset, readGroups):
         'readGroups': readGroups,
     }
 
+def __isTimeDataType(dataType):
+    return dataType == 'TimeColumnConfig' or dataType == 'StaticTimeConfig'
+
+def __isStringDataType(dataType):
+    return dataType == 'StringColumnConfig' or dataType == 'StaticStringConfig'
+
+def __isNumberDataType(dataType):
+    return dataType == 'NumberColumnConfig' or dataType == 'StaticNumberConfig'
 
 def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valueModifiers, valueLabelColumn, sampleData=None, columnSamples=None):
     columnConfigs = __getColumnConfigs(df)
     stringColumns = list(
-        filter(lambda c: c['dataType'] == 'StringColumnConfig', columnConfigs))
+        filter(lambda c: __isStringDataType(c['dataType']), columnConfigs))
     keyColumns = list(filter(lambda s: not (
         s in valueModifiers or s in valueModifiers), stringColumns))
     timeColumns = list(
-        filter(lambda c: c['dataType'] == 'TimeColumnConfig', columnConfigs))
+        filter(lambda c: __isTimeDataType(c['dataType']), columnConfigs))
     valueColumns = list(
-        filter(lambda c: c['dataType'] == 'NumberColumnConfig', columnConfigs))
+        filter(lambda c: __isNumberDataType(c['dataType']), columnConfigs))
     timeTuples = []
     for v in valueColumns:
         for t in timeColumns:
@@ -300,7 +308,56 @@ def __validateLoaderConfig(loaderConfig, df=None):
     if not mapping["timeTuples"]:
         raise Exception("Time tuples empty. No column loaded.")
 
-    # @todo: check that all the columns exist and are of the correct type in the dataFrame
+    columnByName = dict(
+        map(
+            lambda x: (x["name"], x),
+            csvConfig["sourceSettings"]["columnConfigs"]
+        )
+    )
+
+    # Check all columns are correct types and all are defined
+    for field in mapping["keyColumns"]:
+        if not columnByName[field]:
+            raise Exception('key column {} not found.'.format(field))
+
+        fieldType = columnByName[field]["dataType"]
+        if not __isStringDataType(fieldType):
+            raise Exception('keycolumn {} must be a string, got {}.'.format(field, fieldType))
+
+    # Check all value label are correct types and all are defined
+    for field in mapping["valueLabelColumn"]:
+        if not columnByName[field]:
+            raise Exception('value label {} not found.'.format(field))
+
+        fieldType = columnByName[field]["dataType"]
+        if not __isStringDataType(fieldType):
+            raise Exception('value label {} must be a string, got {}.'.format(field, fieldType))
+
+    # Check all time columns label are correct types and all are defined
+    for field in mapping["timeColumns"]:
+        if not columnByName[field]:
+            raise Exception('time column {} not found.'.format(field))
+
+        fieldType = columnByName[field]["dataType"]
+        if not __isTimeDataType(fieldType):
+            raise Exception('time column {} must be a time, got {}.'.format(field, fieldType))
+
+    # Check all time tuples
+    for timeTuple in mapping["timeTuples"]:
+        if not columnByName[timeTuple["timeColumn"]]:
+            raise Exception('time column in tuple {} not found.'.format(str(timeTuple)))
+
+        timeType = columnByName[timeTuple["timeColumn"]]["dataType"]
+        if not __isTimeDataType(timeType):
+            raise Exception('time column in tuple {} must be a time, got {}.'.format(str(timeTuple), timeType))
+
+        if not columnByName[timeTuple["valueColumn"]]:
+            raise Exception('value column in tuple {} not found.'.format(str(timeTuple)))
+
+        valueType = columnByName[timeTuple["valueColumn"]]["dataType"]
+        if not __isNumberDataType(valueType):
+            raise Exception('value column in tuple {} must be a number, got {}.'.format(str(timeTuple), valueType))
+
     return True
 
 
