@@ -149,6 +149,10 @@ def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valu
 
 
 def load_df(lines_in):
+    """
+    Load lines into a dataframe
+    Returns a DataFrame
+    """
     key_columns, time_columns, value_columns, dtype = __generate_meta(lines_in)
     df = __df_empty(list(key_columns + time_columns + value_columns), dtype)
     for line in lines_in:
@@ -186,6 +190,9 @@ class Session:
 
 
 def login(user_name=None, env_conf=None, password=None):
+    """
+    Returns a valid datavore Session object
+    """
     if password == None:
         password = getpass.getpass(
             prompt=f'Enter password for user {user_name} :')
@@ -263,6 +270,7 @@ def __getPreSignedUrl(session: Session, dataSourceId):
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
 
+
 def __cancelCurrentLoad(session: Session, dataSourceId):
     auth_header = {
         'Authorization': 'Bearer %s' % session.token,
@@ -275,7 +283,8 @@ def __cancelCurrentLoad(session: Session, dataSourceId):
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
 
-def __validateLoaderConfig(loaderConfig):
+
+def __validateLoaderConfig(loaderConfig, df=None):
     csvConfig = loaderConfig["loaderConfig"]
     if not csvConfig:
         raise Exception("Empty loader config")
@@ -289,17 +298,22 @@ def __validateLoaderConfig(loaderConfig):
     if not mapping["timeTuples"]:
         raise Exception("Time tuples empty. No column loaded.")
 
+    # @todo: check that all the columns exist and are of the correct type in the dataFrame
     return True
+
 
 def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[], valueLabelColumn=[]):
     # Cancel load if it exists
     __cancelCurrentLoad(session, dataSourceId)
 
+    # @todo: remove old code
     # Generate + check config, set if passes
-    loaderConfig = __generateDataSourceLoaderConfig(
-        df, session.user_name, dataSourceId, frequency, valueModifiers, valueLabelColumn)
-    __validateLoaderConfig(loaderConfig)
-    __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
+    # loaderConfig = __generateDataSourceLoaderConfig(
+    #     df, session.user_name, dataSourceId, frequency, valueModifiers, valueLabelColumn)
+    # __validateLoaderConfig(loaderConfig)
+    # __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
+
+    # @todo: Get dataSource config from server and validate df
 
     # Generate upload url + run it
     uploadUrl = __getPreSignedUrl(session, dataSourceId)
@@ -316,3 +330,39 @@ def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[
             return publish(session, dataSourceId, df, frequency, valueModifiers, valueLabelColumn)
         else:
             raise Exception(res.status_code, res.content.decode('ascii'))
+
+
+def __getDataFrameSample(df):
+    # get only string columns
+    stringsOnly = df.select_dtypes(include=['category'])
+
+    # group by all columns by count
+    groupedCounts = (stringsOnly
+                     .groupby(list(stringsOnly.columns))
+                     .size()
+                     .sort_values(ascending=True)
+                     .reset_index(name='count'))
+    # filter groups that don't exist and take 25
+    sampleData = (groupedCounts[groupedCounts['count'] > 0]  # remove where count is 0
+                  .drop(columns=['count'])
+                  .head(n=25))
+
+    # Get 25 unique values per column
+    columnSamples = {}
+    for c in df.columns:
+        # first 25 unique values of column c
+        columnSamples[c] = list(df[c].unique())[:25]
+
+    return {
+        "sampleData": sampleData,
+        "columnSamples": columnSamples
+    }
+
+
+def setDataSourceSample(session: Session, dataSourceId, df):
+    # get unique row data
+    # get distinct column data
+    # set dataSource sample
+    # return url to configure dataSource
+    dataSourceEditUrl = f'{session.env_conf["apiDomain"]}/txns/#/datasource/{dataSourceId}'
+    dataSourceEditUrl
