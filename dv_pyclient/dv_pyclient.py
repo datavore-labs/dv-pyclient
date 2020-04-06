@@ -108,7 +108,7 @@ def __datasourceMeta(datasourceId, datasource, publisher, dataset, readGroups):
     }
 
 
-def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valueModifiers, valueLabelColumn):
+def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valueModifiers, valueLabelColumn, sampleData=None, columnSamples=None):
     columnConfigs = __getColumnConfigs(df)
     stringColumns = list(
         filter(lambda c: c['dataType'] == 'StringColumnConfig', columnConfigs))
@@ -134,6 +134,8 @@ def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valu
             frequency=frequency,
             timeTuples=timeTuples
         ),
+        'sampleData': sampleData,
+        'columnSamples': columnSamples,
         'datasource': __datasourceMeta(dataSourceId, 'datasource', userName, 'dataset', []),
     }
     return {
@@ -351,18 +353,30 @@ def __getDataFrameSample(df):
     columnSamples = {}
     for c in df.columns:
         # first 25 unique values of column c
-        columnSamples[c] = list(df[c].unique())[:25]
+        columnSamples[c] = list(map(str, df[c].unique()))[:25]
 
     return {
-        "sampleData": sampleData,
+        "sampleData": sampleData.values.tolist(),
         "columnSamples": columnSamples
     }
 
 
 def setDataSourceSample(session: Session, dataSourceId, df):
-    # get unique row data
-    # get distinct column data
-    # set dataSource sample
-    # return url to configure dataSource
-    dataSourceEditUrl = f'{session.env_conf["apiDomain"].replace("/server","/txns")}/txns/#/datasource/{dataSourceId}'
-    dataSourceEditUrl
+    # get the samples
+    sample = __getDataFrameSample(df)
+    # generate a loaderConfig
+    loaderConfig = __generateDataSourceLoaderConfig(
+        df,
+        session.user_name,
+        dataSourceId,
+        frequency=None,
+        valueModifiers=[],
+        valueLabelColumn=[],
+        sampleData=sample['sampleData'],
+        columnSamples=sample['columnSamples']
+    )
+    # validate the loaderConfig
+    __validateLoaderConfig(loaderConfig)
+
+    # save the loaderConfig
+    return __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
