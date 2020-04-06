@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Tests for `dv_pyclient` package."""
+'''Tests for `dv_pyclient` package.'''
 
 import pytest
 import copy
@@ -15,17 +15,17 @@ from dv_pyclient import cli
 
 @pytest.fixture
 def session():
-    """Sample pytest fixture.
+    '''Sample pytest fixture.
 
     See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
-    password = "dummy password"
+    '''
+    password = 'dummy password'
     env_conf = {
         'authDomain': 'https://dev.datavorelabs.com/auth',
         'apiDomain': 'https://dev.datavorelabs.com/server',
         'execDomain': 'https://dev.datavorelabs.com/exec'
     }
-    return dv_pyclient.login("JP Kosmyna", env_conf, password)
+    return dv_pyclient.login('JP Kosmyna', env_conf, password)
 
 
 @pytest.fixture
@@ -34,27 +34,27 @@ def dataFrame():
                          'B': pd.Timestamp('20130102'),
                          'C': pd.Series(1, index=list(range(4)), dtype='float32'),
                          'D': np.array([3] * 4, dtype='int32'),
-                         'E': pd.Categorical(["test", "train", "test", "train"]),
-                         'F': pd.Categorical(["a", "a", "b", "a"])})
+                         'E': pd.Categorical(['test', 'train', 'test', 'train']),
+                         'F': pd.Categorical(['a', 'a', 'b', 'a'])})
 
 
 def test___generateDataSourceLoaderConfig(dataFrame):
     result = dv_pyclient.__generateDataSourceLoaderConfig(
-        dataFrame, "userName", "dataSourceid", None, [], [])
+        dataFrame, 'userName', 'dataSourceid', None, [], [])
     print(result)
     assert True
 
 
 def test___getPreSignedUrl(session):
-    dataSourceId = "72c221ff-703e-11ea-9c7f-1fc811f9ee94"
+    dataSourceId = '72c221ff-703e-11ea-9c7f-1fc811f9ee94'
     presignedUrl = dv_pyclient.__getPreSignedUrl(
         session, dataSourceId)
     assert presignedUrl.startswith(
-        "http://dev-upload.datavorelabs.com:9000/dv-dev/dv-data-loader/uploads/"+dataSourceId)
+        'http://dev-upload.datavorelabs.com:9000/dv-dev/dv-data-loader/uploads/'+dataSourceId)
 
 
 def test__setDataSourceLoaderConfig(session):
-    dataSourceId = "72c221ff-703e-11ea-9c7f-1fc811f9ee94"
+    dataSourceId = '72c221ff-703e-11ea-9c7f-1fc811f9ee94'
     emptyLoaderConfig = {
         'type': 'CsvDataLoaderConfig',
         'dataSource': {
@@ -74,7 +74,7 @@ def test__validateLoaderConfig_empty():
     # No config
     with pytest.raises(Exception) as e_info:
         dv_pyclient.__validateLoaderConfig({})
-    assert "Empty loader config" in str(e_info)
+    assert 'Empty loader config' in str(e_info)
 
 
 def test__validateLoaderConfig_noTime():
@@ -83,38 +83,38 @@ def test__validateLoaderConfig_noTime():
         df = pd.DataFrame({})
         dv_pyclient.__validateLoaderConfig(
             dv_pyclient.__generateDataSourceLoaderConfig(
-                df, "", "", None, [], [])
+                df, '', '', None, [], [])
         )
-    assert "Loader config requires non-empty time columns." in str(e_info)
+    assert 'Loader config requires non-empty time columns.' in str(e_info)
 
 
 def test__validateLoaderConfig_noTuples():
     # No time columns
     with pytest.raises(Exception) as e_info:
         df = pd.DataFrame({
-            'String': pd.Categorical(["a", "a", "b", "a"]),
+            'String': pd.Categorical(['a', 'a', 'b', 'a']),
             'Date': pd.Timestamp('20130102')
         })
         dv_pyclient.__validateLoaderConfig(
             dv_pyclient.__generateDataSourceLoaderConfig(
-                df, "", "", None, [], [])
+                df, '', '', None, [], [])
         )
-    assert "Time tuples empty. No column loaded." in str(e_info)
+    assert 'Time tuples empty. No column loaded.' in str(e_info)
 
 def test__validateLoaderConfig_configTypeCheck():
     df = pd.DataFrame({
-        'String': pd.Categorical(["a", "a", "b", "a"]),
+        'String': pd.Categorical(['a', 'a', 'b', 'a']),
         'Date': pd.Timestamp('20130102'),
         'Value': np.array([3] * 4, dtype='int32')
     })
-    baseConfig = dv_pyclient.__generateDataSourceLoaderConfig(df, "", "", None, [], [])
+    baseConfig = dv_pyclient.__generateDataSourceLoaderConfig(df, '', '', None, [], [])
 
     # all keyColumns defined
     with pytest.raises(Exception) as e_info:
         local = copy.deepcopy(baseConfig)
-        del local["loaderConfig"]["sourceSettings"]["columnConfigs"][0]
+        del local['loaderConfig']['sourceSettings']['columnConfigs'][0]
         dv_pyclient.__validateLoaderConfig(local)
-    assert "key column String not found" in str(e_info)
+    assert 'key column String not found' in str(e_info)
 
 def test__validateLoaderConfig_dataFrameTypeCheck():
     assert True
@@ -126,19 +126,19 @@ def test__validateLoaderConfig_valid():
         'Value': np.array([3] * 4, dtype='int32')
     })
     assert dv_pyclient.__validateLoaderConfig(
-        dv_pyclient.__generateDataSourceLoaderConfig(df, "", "", None, [], []),
+        dv_pyclient.__generateDataSourceLoaderConfig(df, '', '', None, [], []),
         df
     )
 
 
 def test_publish(session, dataFrame):
-    dataSourceId = "72c221ff-703e-11ea-9c7f-1fc811f9ee94"
+    dataSourceId = '72c221ff-703e-11ea-9c7f-1fc811f9ee94'
     resp = dv_pyclient.publish(session, dataSourceId, dataFrame)
     assert resp.status_code == 200
 
 
 def test_command_line_interface():
-    """Test the CLI."""
+    '''Test the CLI.'''
     runner = CliRunner()
     result = runner.invoke(cli.main)
     assert result.exit_code == 0
