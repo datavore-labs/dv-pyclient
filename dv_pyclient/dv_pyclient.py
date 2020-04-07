@@ -413,26 +413,19 @@ def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[
             raise Exception(res.status_code, res.content.decode('ascii'))
 
 
-def __getDataFrameSample(df):
-    # get only string columns
-    stringsOnly = df.select_dtypes(include=['category'])
+def __getDataFrameSample(df, maxToSample=25):
+    # get only string columns -- @todo: is object fine? data frames with mixed types are object (so, strings with null)
+    stringsOnly = list(
+        df.select_dtypes(include=['category', 'object']).columns
+    )
 
-    # group by all columns by count
-    groupedCounts = (stringsOnly
-                     .groupby(list(stringsOnly.columns))
-                     .size()
-                     .sort_values(ascending=True)
-                     .reset_index(name='count'))
-    # filter groups that don't exist and take 25
-    sampleData = (groupedCounts[groupedCounts['count'] > 0]  # remove where count is 0
-                  .drop(columns=['count'])
-                  .head(n=25))
+    # get a distinct on strings sample
+    sampleData = df.drop_duplicates(subset=stringsOnly).sample(maxToSample)
 
-    # Get 25 unique values per column
+    # first 25 unique non-null values of column c
     columnSamples = {}
     for c in df.columns:
-        # first 25 unique values of column c
-        columnSamples[c] = list(map(str, df[c].unique()))[:25]
+        columnSamples[c] = list(map(str, df[c].dropna().unique()[:25]))
 
     return {
         'sampleData': sampleData.values.tolist(),
