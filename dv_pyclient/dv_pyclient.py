@@ -442,7 +442,7 @@ def publish(session: Session, dataSourceId, df):
     # Put data to the uploadUrl
     retries = 2
     with tempfile.NamedTemporaryFile(mode='r+') as temp:
-        df.to_csv(temp.name, index=False, date_format='%Y-%m-%dT%H:%M%SZ')
+        df.to_csv(temp.name, index=False, date_format='%Y-%m-%dT%H:%M:%SZ')
 
         while retries > 0:
             with open(temp.name, mode='rb') as csvFile:
