@@ -58,7 +58,7 @@ def __getColumnTypeOptions(dType):
         }
     if(is_datetime64_any_dtype(dType)):
         return {
-            'dateFormat': 'ISO_DATE',
+            'dateFormat': 'ISO_DATE_TIME',
             'dataType': 'TimeColumnConfig',
         }
     raise Exception(f'Unsupprted dType: {dType}')
@@ -441,7 +441,7 @@ def publish(session: Session, dataSourceId, df):
     # Put data to the uploadUrl
     retries = 2
     with tempfile.NamedTemporaryFile(mode='r+') as temp:
-        df.to_csv(temp.name, index=False)
+        df.to_csv(temp.name, index=False, date_format='%Y-%m-%dT%H:%M%SZ')
 
         while retries > 0:
             with open(temp.name, mode='rb') as csvFile:
@@ -459,12 +459,6 @@ def publish(session: Session, dataSourceId, df):
         # Ran out of retries and never managed to upload :(
         raise Exception('Failed to upload.')
 
-
-def __toStrNone(s):
-    if s is None:
-        return None
-    return str(s)
-
 def __getDataFrameSample(df, maxToSample=25):
     # get only string columns -- @todo: is object fine? data frames with mixed types are object (so, strings with null)
     stringsOnly = list(
@@ -474,16 +468,13 @@ def __getDataFrameSample(df, maxToSample=25):
     # get a distinct on strings sample
     sampleData = df.drop_duplicates(subset=stringsOnly).sample(min(len(df), maxToSample))
 
-    # Jump through hoops to make it Array[Array[Option[String]]]....
-    sampleAsOptStrArr = sampleData.where(pd.notnull(df), None).applymap(__toStrNone).values.tolist()
-
     # first 25 unique non-null values of column c
     columnSamples = {}
     for c in df.columns:
         columnSamples[c] = list(map(str, df[c].dropna()[:25]))
 
     return {
-        'sampleData': sampleAsOptStrArr,
+        'sampleData': sampleData.to_json(date_format='iso'),
         'columnSamples': columnSamples
     }
 
