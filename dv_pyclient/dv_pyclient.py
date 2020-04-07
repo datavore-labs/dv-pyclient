@@ -269,6 +269,17 @@ def __setDatasourceLoaderConfig(session: Session, dataSourceId, loaderConfig):
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
 
+def __getDatasourceLoaderConfig(session: Session, dataSourceId):
+    auth_header = {
+        'Authorization': 'Bearer %s' % session.token,
+        'Content-type': 'application/json',
+    }
+    url = f'{session.env_conf["apiDomain"]}/txns/datasource/{dataSourceId}/loader'
+    res = requests.get(url, headers=auth_header)
+    if res.status_code == 200:
+        return res.json()['payload']['document']['config']
+    else:
+        raise Exception(res.status_code, res.content.decode('ascii'))
 
 def __getPreSignedUrl(session: Session, dataSourceId):
     auth_header = {

@@ -62,12 +62,20 @@ def test__setDataSourceLoaderConfig(session):
             'id': dataSourceId,
         },
         'strategy': 'Overwrite',
-        'loaderConfig': {},
+        'loaderConfig': {
+            'generated': True
+        },
         'inputs': {}
     }
     resp = dv_pyclient.__setDatasourceLoaderConfig(
         session, dataSourceId, emptyLoaderConfig)
     assert resp.status_code == 200
+
+def test__getDatasourceLoaderConfig(session):
+    dataSourceId = '8eafff0a-7835-11ea-b299-55625c1ef477'
+    configJson = dv_pyclient.__getDatasourceLoaderConfig(session, dataSourceId)
+    # print(configJson)
+    assert configJson != None
 
 
 def test__validateLoaderConfig_empty():
