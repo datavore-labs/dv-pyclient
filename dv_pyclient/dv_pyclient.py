@@ -394,35 +394,56 @@ def __validateLoaderConfig(loaderConfig, df=None):
     return True
 
 
-def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[], valueLabelColumn=[]):
+def publish(session: Session, dataSourceId, df):
+    # Get the current loader config
+    currentConfig = __getDatasourceLoaderConfig(session, dataSourceId)
+
+    # Validate the config against the dataframe
+    if not __validateLoaderConfig(currentConfig, df):
+        raise Exception('Could not validate config.')
+
     # Cancel load if it exists
-    __cancelCurrentLoad(session, dataSourceId)
+    try:
+        __cancelCurrentLoad(session, dataSourceId)
+    except:
+        print('No job to cancel. Continuing.')
+        # @todo: log debug here -- exception if never loaded before
 
-    # @todo: remove old code
-    # Generate + check config, set if passes
-    # loaderConfig = __generateDataSourceLoaderConfig(
-    #     df, session.user_name, dataSourceId, frequency, valueModifiers, valueLabelColumn)
-    # __validateLoaderConfig(loaderConfig)
-    # __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
-
-    # @todo: Get dataSource config from server and validate df
-
-    # Generate upload url + run it
+    # Generate upload url
     uploadUrl = __getPreSignedUrl(session, dataSourceId)
 
+    print('Uploading data frame...')
+
+    # Update the config with the URL @todo: use patch so we don't send the entire data brick back up :/
+    # currentConfig['uploadUrl'] = uploadUrl
+    # __setDatasourceLoaderConfig(session, dataSourceId, currentConfig)
+
     # Put data to the uploadUrl
+    retries = 2
     with tempfile.NamedTemporaryFile(mode='r+') as temp:
         df.to_csv(temp.name, index=False)
-        res = requests.put(uploadUrl, data=open(temp.name, mode='rb'))
 
-        if res.status_code == 200:
-            return res
-        elif res.status_code == 401:
-            session = login(session.user_name, session.env_conf)
-            return publish(session, dataSourceId, df, frequency, valueModifiers, valueLabelColumn)
-        else:
-            raise Exception(res.status_code, res.content.decode('ascii'))
+        while retries > 0:
+            with open(temp.name, mode='rb') as csvFile:
+                res = requests.put(uploadUrl, data=csvFile)
+                if res.status_code == 200:
+                    print('Data frame uploaded. Datavore load started.')
+                    return res
+                elif res.status_code == 401:
+                    retries -= 1
+                    print(f'Session upload error. Log in again. Attempts remaining: {retries}')
+                    session = login(session.user_name, session.env_conf)
+                else:
+                    raise Exception(res.status_code, res.content.decode('ascii'))
 
+        # Ran out of retries and never managed to upload :(
+        raise Exception('Failed to upload.')
+
+
+def __toStrNone(s):
+    if s is None:
+        return None
+    return str(s)
 
 def __getDataFrameSample(df, maxToSample=25):
     # get only string columns -- @todo: is object fine? data frames with mixed types are object (so, strings with null)
@@ -433,13 +454,16 @@ def __getDataFrameSample(df, maxToSample=25):
     # get a distinct on strings sample
     sampleData = df.drop_duplicates(subset=stringsOnly).sample(min(len(df), maxToSample))
 
+    # Jump through hoops to make it Array[Array[Option[String]]]....
+    sampleAsOptStrArr = sampleData.where(pd.notnull(df), None).applymap(__toStrNone).values.tolist()
+
     # first 25 unique non-null values of column c
     columnSamples = {}
     for c in df.columns:
         columnSamples[c] = list(map(str, df[c].dropna()[:25]))
 
     return {
-        'sampleData': sampleData.values.tolist(),
+        'sampleData': sampleAsOptStrArr,
         'columnSamples': columnSamples
     }
 
