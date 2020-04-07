@@ -1,6 +1,7 @@
 '''Main module.'''
 
 import io
+import json
 import tempfile
 import ndjson
 import requests
@@ -459,22 +460,26 @@ def publish(session: Session, dataSourceId, df):
         # Ran out of retries and never managed to upload :(
         raise Exception('Failed to upload.')
 
-def __getDataFrameSample(df, maxToSample=25):
+def __getDataFrameSample(df, colToSample=25, rowsToSample=25):
     # get only string columns -- @todo: is object fine? data frames with mixed types are object (so, strings with null)
     stringsOnly = list(
         df.select_dtypes(include=['category', 'object']).columns
     )
 
     # get a distinct on strings sample
-    sampleData = df.drop_duplicates(subset=stringsOnly).sample(min(len(df), maxToSample))
+    sampleData = df.drop_duplicates(subset=stringsOnly).sample(min(len(df), rowsToSample))
 
     # first 25 unique non-null values of column c
     columnSamples = {}
     for c in df.columns:
-        columnSamples[c] = list(map(str, df[c].dropna()[:25]))
+        sample = df[c].dropna().sample(colToSample, replace=True)
+        if (is_datetime64_any_dtype(sample.dtype)):
+            columnSamples[c] = list(map(lambda x: x.isoformat(), sample))
+        else:
+            columnSamples[c] = list(map(str, sample))
 
     return {
-        'sampleData': sampleData.to_json(date_format='iso'),
+        'sampleData': json.loads(sampleData.to_json(orient='values', date_format='iso')),
         'columnSamples': columnSamples
     }
 
