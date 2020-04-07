@@ -81,8 +81,8 @@ def __csvFileSettings(columnConfigs):
         'filePath': 'from dataframe',
         'delimiter': ',',
         'lineSeparator': '\n',
-        'quote': ''',
-        'quoteEscape': ''',
+        'quote': '"',
+        'quoteEscape': '"',
         'columnConfigs': columnConfigs,
     }
 
@@ -278,6 +278,26 @@ def __getDatasourceLoaderConfig(session: Session, dataSourceId):
     res = requests.get(url, headers=auth_header)
     if res.status_code == 200:
         return res.json()['payload']['document']['config']
+    else:
+        raise Exception(res.status_code, res.content.decode('ascii'))
+
+def getPublishStatus(session: Session, dataSourceId):
+    auth_header = {
+        'Authorization': 'Bearer %s' % session.token,
+        'Content-type': 'application/json',
+    }
+    url = f'{session.env_conf["apiDomain"]}/txns/datasource/{dataSourceId}/loader'
+    res = requests.get(url, headers=auth_header)
+    if res.status_code == 200:
+        statusJson = res.json()['payload']['document']['status']
+
+        if statusJson.get('status') == 'rejected':
+            return {
+                'status': statusJson.get('status'),
+                'reason': statusJson.get('reason')
+            }
+
+        return { 'status': statusJson.get('status') }
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
 
@@ -486,4 +506,6 @@ def setDataSourceSample(session: Session, dataSourceId, df):
     __validateLoaderConfig(loaderConfig)
 
     # save the loaderConfig
-    return __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
+    out = __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
+    print('Sample uploaded. Go to the Datavore client to review')
+    return out
