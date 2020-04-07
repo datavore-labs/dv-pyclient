@@ -420,12 +420,12 @@ def __getDataFrameSample(df, maxToSample=25):
     )
 
     # get a distinct on strings sample
-    sampleData = df.drop_duplicates(subset=stringsOnly).sample(maxToSample)
+    sampleData = df.drop_duplicates(subset=stringsOnly).sample(min(len(df), maxToSample))
 
     # first 25 unique non-null values of column c
     columnSamples = {}
     for c in df.columns:
-        columnSamples[c] = list(map(str, df[c].dropna().unique()[:25]))
+        columnSamples[c] = list(map(str, df[c].dropna()[:25]))
 
     return {
         'sampleData': sampleData.values.tolist(),
