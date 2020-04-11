@@ -48,15 +48,15 @@ def __df_empty(columns, dtypes, index=None):
 
 
 def __getColumnTypeOptions(dType):
-    if(is_numeric_dtype(dType)):
+    if (is_numeric_dtype(dType)):
         return {
             'dataType': 'NumberColumnConfig',
         }
-    if(is_string_dtype(dType)):
+    if (is_string_dtype(dType)):
         return {
             'dataType': 'StringColumnConfig',
         }
-    if(is_datetime64_any_dtype(dType)):
+    if (is_datetime64_any_dtype(dType)):
         return {
             'dateFormat': 'ISO_DATE',
             'dataType': 'TimeColumnConfig',
@@ -107,24 +107,27 @@ def __datasourceMeta(datasourceId, datasource, publisher, dataset, readGroups):
         'readGroups': readGroups,
     }
 
+
 def __isTimeDataType(dataType):
     return dataType in frozenset(['TimeColumnConfig', 'StaticTimeConfig'])
+
 
 def __isStringDataType(dataType):
     return dataType in frozenset(['StringColumnConfig', 'StaticStringConfig'])
 
+
 def __isNumberDataType(dataType):
     return dataType in frozenset(['NumberColumnConfig', 'StaticNumberConfig'])
+
 
 def __isStaticDataType(dataType):
     return dataType in frozenset(['StaticTimeConfig', 'StaticStringConfig', 'StaticNumberConfig'])
 
-def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valueModifiers, valueLabelColumn, sampleData=None, columnSamples=None):
-    columnConfigs = __getColumnConfigs(df)
+
+def __getDataLoadMappings(columnConfigs, valueModifiers):
     stringColumns = list(
         filter(lambda c: __isStringDataType(c['dataType']), columnConfigs))
-    keyColumns = list(filter(lambda s: not (
-        s in valueModifiers or s in valueModifiers), stringColumns))
+    keyColumns = list(filter(lambda s: not (s in valueModifiers), stringColumns))
     timeColumns = list(
         filter(lambda c: __isTimeDataType(c['dataType']), columnConfigs))
     valueColumns = list(
@@ -133,7 +136,16 @@ def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valu
     for v in valueColumns:
         for t in timeColumns:
             timeTuples.append(
-                {'timeColumn': t['name'], 'valueColumn': v['name']})
+                {'timeColumn': t['name'], 'valueColumn': v['name']}
+            )
+
+    return stringColumns, keyColumns, timeColumns, valueColumns, timeTuples
+
+
+def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valueModifiers, valueLabelColumn,
+                                     sampleData=None, columnSamples=None):
+    columnConfigs = __getColumnConfigs(df)
+    stringColumns, keyColumns, timeColumns, valueColumns, timeTuples = __getDataLoadMappings(columnConfigs, valueModifiers)
     csvConfig = {
         'generated': True,
         'sourceSettings': __csvFileSettings(columnConfigs),
@@ -161,7 +173,7 @@ def __generateDataSourceLoaderConfig(df, userName, dataSourceId, frequency, valu
     }
 
 
-def load_df(lines_in):
+def load_df(lines_in) -> pd.DataFrame:
     '''
     Load lines into a dataframe
     Returns a DataFrame
@@ -296,10 +308,12 @@ def __cancelCurrentLoad(session: Session, dataSourceId):
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
 
+
 def __getColumnsByName(columnConfigs):
     return dict(
         map(lambda x: (x['name'], x), columnConfigs)
     )
+
 
 def __validateLoaderConfig(loaderConfig, df=None):
     csvConfig = loaderConfig.get('loaderConfig')
@@ -378,7 +392,8 @@ def __validateLoaderConfig(loaderConfig, df=None):
                 raise Exception(f'data frame missing required field: {keyField} of type: {requiredType}')
 
             if dfColumnsByName[keyField]['dataType'] != requiredType:
-                raise Exception(f'data frame field {keyField} must be of type {requiredType}. Got {dfColumnsByName[keyField]["dataType"]}')
+                raise Exception(
+                    f'data frame field {keyField} must be of type {requiredType}. Got {dfColumnsByName[keyField]["dataType"]}')
 
     return True
 

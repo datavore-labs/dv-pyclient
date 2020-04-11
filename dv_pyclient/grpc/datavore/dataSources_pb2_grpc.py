@@ -24,8 +24,8 @@ class RemoteDataSourceStub(object):
         request_serializer=datavore_dot_dataSources__pb2.DataSourceUniquesRequest.SerializeToString,
         response_deserializer=datavore_dot_dataSources__pb2.DataRecordsReply.FromString,
         )
-    self.dataSourceMeta = channel.unary_unary(
-        '/com.datavorelabs.common.protos.RemoteDataSource/dataSourceMeta',
+    self.sampleDataSourceMeta = channel.unary_unary(
+        '/com.datavorelabs.common.protos.RemoteDataSource/sampleDataSourceMeta',
         request_serializer=datavore_dot_dataSources__pb2.DataSourceMetaRequest.SerializeToString,
         response_deserializer=datavore_dot_dataSources__pb2.DataSourceMetaReply.FromString,
         )
@@ -54,7 +54,7 @@ class RemoteDataSourceServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
-  def dataSourceMeta(self, request, context):
+  def sampleDataSourceMeta(self, request, context):
     """Returns the meta needed to read the dataRecords as lines
     """
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -81,8 +81,8 @@ def add_RemoteDataSourceServicer_to_server(servicer, server):
           request_deserializer=datavore_dot_dataSources__pb2.DataSourceUniquesRequest.FromString,
           response_serializer=datavore_dot_dataSources__pb2.DataRecordsReply.SerializeToString,
       ),
-      'dataSourceMeta': grpc.unary_unary_rpc_method_handler(
-          servicer.dataSourceMeta,
+      'sampleDataSourceMeta': grpc.unary_unary_rpc_method_handler(
+          servicer.sampleDataSourceMeta,
           request_deserializer=datavore_dot_dataSources__pb2.DataSourceMetaRequest.FromString,
           response_serializer=datavore_dot_dataSources__pb2.DataSourceMetaReply.SerializeToString,
       ),
