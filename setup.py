@@ -41,7 +41,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/""/dv_pyclient',
+    url='https://github.com/datavore-labs/dv-pyclient',
     version='0.3.1',
     zip_safe=False,
 )
