@@ -85,6 +85,6 @@ install: clean ## install the package to the active Python's site-packages
 	python setup.py install
 
 proto: ## update / install new protofiles for python
-	python -m grpc_tools.protoc -Igrpc_setup --python_out=dv_pyclient/grpc --grpc_python_out=dv_pyclient/grpc grpc_setup/scalapb/scalapb.proto
-	python -m grpc_tools.protoc -Igrpc_setup --python_out=dv_pyclient/grpc --grpc_python_out=dv_pyclient/grpc grpc_setup/datavore/dataSources.proto
+	python -m grpc_tools.protoc -Igrpc_setup --python_out=./ --grpc_python_out=./ grpc_setup/dv_pyclient/grpc/scalapb/scalapb.proto
+	python -m grpc_tools.protoc -Igrpc_setup --python_out=./ --grpc_python_out=./ grpc_setup/dv_pyclient/grpc/datavore/dataSources.proto
 
