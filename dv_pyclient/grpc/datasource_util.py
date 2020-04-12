@@ -8,17 +8,22 @@ import pandas as pd
 import google.protobuf.wrappers_pb2 as proto
 import numpy as np
 
+
 def __isTimeDataType(dataType):
     return dataType in frozenset(['TimeColumnConfig', 'StaticTimeConfig'])
+
 
 def __isStringDataType(dataType):
     return dataType in frozenset(['StringColumnConfig', 'StaticStringConfig'])
 
+
 def __isNumberDataType(dataType):
     return dataType in frozenset(['NumberColumnConfig', 'StaticNumberConfig'])
 
+
 def __isStaticDataType(dataType):
     return dataType in frozenset(['StaticTimeConfig', 'StaticStringConfig', 'StaticNumberConfig'])
+
 
 def __getDataLoadMappings(columnConfigs, valueModifiers):
     stringColumnsAndMeta = list(filter(lambda c: __isStringDataType(c[1]['dataType']), columnConfigs))
@@ -45,7 +50,6 @@ def __getDataLoadMappings(columnConfigs, valueModifiers):
     )
 
 
-
 #######################################
 ### Pandas helpers to read meta
 ############
@@ -70,7 +74,7 @@ def __getSampleRowsPandas(df):
 def __getColumnSamplesPandas(df):
     columnSamples = []
     for col in df.columns:
-        colvalues = list(map(lambda d:  "" if d is None else str(d), df[col][0:100].tolist()))
+        colvalues = list(map(lambda d: "" if d is None else str(d), df[col][0:100].tolist()))
         colGrpc = api.ColumnSample(
             columnName=col,
             values=colvalues
@@ -87,7 +91,7 @@ def __getColumnConfigsPandas(df: pd.DataFrame):
         baseConfig = __getColumnTypeOptions(dType, name)
         pythonConfigs.append(baseConfig)
 
-        #And make the correct grpc model
+        # And make the correct grpc model
         if baseConfig['dataType'] == 'StringColumnConfig':
             typed_conf = api.ColumnConfig(stringColumnConfig=api.StringColumnConfig(
                 name=name,
@@ -124,12 +128,13 @@ def getDatasourceMetaReplyPandas(df, ds_id, ds_name):
         dataSourceName=ds_name,
         columnConfigs=list(map(lambda x: x[0], typedColumnConfigsAndMeta)),
         dataLoadMapping=data_load_mappings,
-        sampleData=rowSamples,   # repeated RowSample
+        sampleData=rowSamples,  # repeated RowSample
         columnSamples=columnSamples,  # repeated ColumnSample
     )
 
+
 def dataSourceUniquesStreamPandas(df, request):
-    chunk_size = 100                    #Determines the number of records per rpc batch
+    chunk_size = 100  # Determines the number of records per rpc batch
     columns = list(request.columns)
     unique_df = df[columns].drop_duplicates()
     for chunk_df in np.array_split(unique_df, chunk_size):
@@ -142,6 +147,7 @@ def dataSourceUniquesStreamPandas(df, request):
             data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
         yield api.DataRecordsReply(records=data_records)
 
+
 def dataSourceQueryStreamPandas(df, request):
     # Make and resolve the data for each line requested.
     # We yield batches of DataRecordsReply, one for each line requested
@@ -149,6 +155,7 @@ def dataSourceQueryStreamPandas(df, request):
         columns = []
         column_types = []
         filterExprs = []
+        # Make the filter expression from columns
         for filt in querystr.columns:
             columns.append(filt.name)
             column_types.append(filt.type)
@@ -157,23 +164,31 @@ def dataSourceQueryStreamPandas(df, request):
                 filterExprs.append(f'({filt_str})')
             elif filt.type == api.ColumnType.Value("Number") and len(filt.numberFilter) > 0:
                 if len(filt.numberFilter) == 1:
-                    f'{filt.name} == {filt.numberFilter[0].value.value}'
+                    filt_num = f'{filt.name} == {filt.numberFilter[0].value.value}'
+                    filterExprs.append(f'({filt_num})')
                 else:
-                    f'{filt.name} >= {filt.numberFilter[0].value.value} and {filt.name} < {filt.numberFilter[1].value.value}'
+                    filt_num = f'{filt.name} >= {filt.numberFilter[0].value.value} and {filt.name} < {filt.numberFilter[1].value.value}'
+                    filterExprs.append(f'({filt_num})')
+            #TODO: Support time filter after server format is known
             elif type == "Time":
                 if len(filt.timeFilter) == 1:
                     f'{filt.name} == {filt.timeFilter[0].value.value}'
                 else:
                     f'{filt.name} >= {filt.timeFilter[0].value.value} and {filt.name} < {filt.timeFilter[1].value.value}'
-
         line_query = ' and '.join(filterExprs)
-        line_result_df = df[columns].query(line_query)
 
-        #Inplace convert all date columns to unixepoch
-        date_cols = list(map(lambda x: x[0], filter(lambda t: t[1]==api.ColumnType.Value("Time"), list(zip(columns, column_types)))))
+        # Filter data
+        line_result_df = df[columns].query(line_query)
+        # Inplace convert all date columns to unixepoch
+        date_cols = list(map(lambda x: x[0],
+                             filter(lambda t: t[1] == api.ColumnType.Value("Time"), list(zip(columns, column_types)))))
         for date_col in date_cols:
             line_result_df[date_col] = line_result_df[date_col].astype(np.int64)
 
+        # TODO: Sort values by date columns
+        line_result_df.sort_values(by=date_col, inplace=True)
+
+        # Serialize
         data_records = []
         for idx, row in line_result_df.iterrows():
             strings, numbers, times = [], [], []
