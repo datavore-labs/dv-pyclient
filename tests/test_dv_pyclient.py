@@ -62,12 +62,20 @@ def test__setDataSourceLoaderConfig(session):
             'id': dataSourceId,
         },
         'strategy': 'Overwrite',
-        'loaderConfig': {},
+        'loaderConfig': {
+            'generated': True
+        },
         'inputs': {}
     }
     resp = dv_pyclient.__setDatasourceLoaderConfig(
         session, dataSourceId, emptyLoaderConfig)
     assert resp.status_code == 200
+
+def test__getDatasourceLoaderConfig(session):
+    dataSourceId = '8eafff0a-7835-11ea-b299-55625c1ef477'
+    configJson = dv_pyclient.__getDatasourceLoaderConfig(session, dataSourceId)
+    # print(configJson)
+    assert configJson != None
 
 
 def test__validateLoaderConfig_empty():
@@ -237,8 +245,20 @@ def test_command_line_interface():
     assert help_result.exit_code == 0
     assert '--help  Show this message and exit.' in help_result.output
 
+def test___getDataFrameSample():
+    sampleFrame = pd.DataFrame({
+        'CatA': pd.Categorical(['A', 'A', 'B', 'B', 'C']),
+        'CatB': pd.Categorical(['X', 'Y', 'X', 'Y', 'Z']),
+        'Date': pd.Timestamp('20130102'),
+        'Value': np.array(5, dtype='int32')
+    })
+    sample = dv_pyclient.__getDataFrameSample(sampleFrame)
 
-def test___getDataFrameSample(dataFrame):
-    result = dv_pyclient.__getDataFrameSample(dataFrame)
-    print(result)
-    assert True
+    # Sampled every row
+    assert len(sample['sampleData']) == 5
+
+    # Per-column samples
+    assert sample['columnSamples']['CatA'] == list(sampleFrame['CatA'])
+    assert sample['columnSamples']['CatB'] == list(sampleFrame['CatB'])
+    assert sample['columnSamples']['Date'] == list(map(str, sampleFrame['Date']))
+    assert sample['columnSamples']['Value'] == list(map(str, sampleFrame['Value']))

@@ -1,6 +1,7 @@
 '''Main module.'''
 
 import io
+import json
 import tempfile
 import ndjson
 import requests
@@ -58,7 +59,7 @@ def __getColumnTypeOptions(dType):
         }
     if (is_datetime64_any_dtype(dType)):
         return {
-            'dateFormat': 'ISO_DATE',
+            'dateFormat': 'ISO_DATE_TIME',
             'dataType': 'TimeColumnConfig',
         }
     raise Exception(f'Unsupprted dType: {dType}')
@@ -81,8 +82,8 @@ def __csvFileSettings(columnConfigs):
         'filePath': 'from dataframe',
         'delimiter': ',',
         'lineSeparator': '\n',
-        'quote': ''',
-        'quoteEscape': ''',
+        'quote': '"',
+        'quoteEscape': '"',
         'columnConfigs': columnConfigs,
     }
 
@@ -281,6 +282,37 @@ def __setDatasourceLoaderConfig(session: Session, dataSourceId, loaderConfig):
     else:
         raise Exception(res.status_code, res.content.decode('ascii'))
 
+def __getDatasourceLoaderConfig(session: Session, dataSourceId):
+    auth_header = {
+        'Authorization': 'Bearer %s' % session.token,
+        'Content-type': 'application/json',
+    }
+    url = f'{session.env_conf["apiDomain"]}/txns/datasource/{dataSourceId}/loader'
+    res = requests.get(url, headers=auth_header)
+    if res.status_code == 200:
+        return res.json()['payload']['document']['config']
+    else:
+        raise Exception(res.status_code, res.content.decode('ascii'))
+
+def getPublishStatus(session: Session, dataSourceId):
+    auth_header = {
+        'Authorization': 'Bearer %s' % session.token,
+        'Content-type': 'application/json',
+    }
+    url = f'{session.env_conf["apiDomain"]}/txns/datasource/{dataSourceId}/loader'
+    res = requests.get(url, headers=auth_header)
+    if res.status_code == 200:
+        statusJson = res.json()['payload']['document']['status']
+
+        if statusJson.get('status') == 'rejected':
+            return {
+                'status': statusJson.get('status'),
+                'reason': statusJson.get('reason')
+            }
+
+        return { 'status': statusJson.get('status') }
+    else:
+        raise Exception(res.status_code, res.content.decode('ascii'))
 
 def __getPreSignedUrl(session: Session, dataSourceId):
     auth_header = {
@@ -398,59 +430,82 @@ def __validateLoaderConfig(loaderConfig, df=None):
     return True
 
 
-def publish(session: Session, dataSourceId, df, frequency=None, valueModifiers=[], valueLabelColumn=[]):
+def publish(session: Session, dataSourceId, df):
+    # Get the current loader config
+    currentConfig = __getDatasourceLoaderConfig(session, dataSourceId)
+
+    # Validate the config against the dataframe
+    if not __validateLoaderConfig(currentConfig, df):
+        raise Exception('Could not validate config.')
+
     # Cancel load if it exists
-    __cancelCurrentLoad(session, dataSourceId)
+    try:
+        __cancelCurrentLoad(session, dataSourceId)
+    except:
+        print('No job to cancel. Continuing.')
+        # @todo: log debug here -- exception if never loaded before
 
-    # @todo: remove old code
-    # Generate + check config, set if passes
-    # loaderConfig = __generateDataSourceLoaderConfig(
-    #     df, session.user_name, dataSourceId, frequency, valueModifiers, valueLabelColumn)
-    # __validateLoaderConfig(loaderConfig)
-    # __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
-
-    # @todo: Get dataSource config from server and validate df
-
-    # Generate upload url + run it
+    # Generate upload url
     uploadUrl = __getPreSignedUrl(session, dataSourceId)
 
+    print('Uploading data frame...')
+
+    # Update the config with the URL @todo: use patch so we don't send the entire data brick back up :/
+    # currentConfig['uploadUrl'] = uploadUrl
+    # __setDatasourceLoaderConfig(session, dataSourceId, currentConfig)
+
     # Put data to the uploadUrl
+    retries = 2
     with tempfile.NamedTemporaryFile(mode='r+') as temp:
-        df.to_csv(temp.name, index=False)
-        res = requests.put(uploadUrl, data=open(temp.name, mode='rb'))
+        df.to_csv(temp.name, index=False, date_format='%Y-%m-%dT%H:%M:%SZ')
 
-        if res.status_code == 200:
-            return res
-        elif res.status_code == 401:
-            session = login(session.user_name, session.env_conf)
-            return publish(session, dataSourceId, df, frequency, valueModifiers, valueLabelColumn)
-        else:
-            raise Exception(res.status_code, res.content.decode('ascii'))
+        while retries > 0:
+            with open(temp.name, mode='rb') as csvFile:
+                res = requests.put(uploadUrl, data=csvFile)
+                if res.status_code == 200:
+                    print('Data frame uploaded. Datavore load started.')
+                    return res
+                elif res.status_code == 401:
+                    retries -= 1
+                    print(f'Session upload error. Log in again. Attempts remaining: {retries}')
+                    session = login(session.user_name, session.env_conf)
+                else:
+                    raise Exception(res.status_code, res.content.decode('ascii'))
 
+        # Ran out of retries and never managed to upload :(
+        raise Exception('Failed to upload.')
 
-def __getDataFrameSample(df):
-    # get only string columns
-    stringsOnly = df.select_dtypes(include=['category'])
+def __toStrNone(s):
+    if s is None:
+        return None
+    return str(s)
 
-    # group by all columns by count
-    groupedCounts = (stringsOnly
-                     .groupby(list(stringsOnly.columns))
-                     .size()
-                     .sort_values(ascending=True)
-                     .reset_index(name='count'))
-    # filter groups that don't exist and take 25
-    sampleData = (groupedCounts[groupedCounts['count'] > 0]  # remove where count is 0
-                  .drop(columns=['count'])
-                  .head(n=25))
+def __getDataFrameSample(df, colToSample=25, rowsToSample=25):
+    # get only string columns -- @todo: is object fine? data frames with mixed types are object (so, strings with null)
+    stringsOnly = list(
+        df.select_dtypes(include=['category', 'object']).columns
+    )
 
-    # Get 25 unique values per column
+    # get a distinct on strings sample
+    sampleData = df.drop_duplicates(subset=stringsOnly).sample(min(len(df), rowsToSample))
+
+    # format dates as iso strings
+    datesOnly = list(
+        sampleData.select_dtypes(include=[np.datetime64]).columns
+    )
+    sampleData[datesOnly] = sampleData[datesOnly].applymap(lambda x: x.isoformat())
+
+    # first 25 unique non-null values of column c
     columnSamples = {}
     for c in df.columns:
-        # first 25 unique values of column c
-        columnSamples[c] = list(map(str, df[c].unique()))[:25]
+        sample = df[c].dropna().sample(colToSample, replace=True)
+        columnSamples[c] = list(map(str, sample))
 
+    sampleValues = sampleData.where(pd.notnull(df), None).applymap(__toStrNone).values.tolist()
+
+    # Project values
     return {
-        'sampleData': sampleData.values.tolist(),
+        'sampleData': sampleValues,
         'columnSamples': columnSamples
     }
 
@@ -473,4 +528,6 @@ def setDataSourceSample(session: Session, dataSourceId, df):
     __validateLoaderConfig(loaderConfig)
 
     # save the loaderConfig
-    return __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
+    out = __setDatasourceLoaderConfig(session, dataSourceId, loaderConfig)
+    print('Sample uploaded. Go to the Datavore client to review')
+    return out
