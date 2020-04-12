@@ -13,6 +13,9 @@ Make a virtual env in a directory outside the project dir
 python -m venv /path-to-create-environment-in
 source /path-to-create-environment-in/bin/activate
 ```
+OR
+
+
 
 Install deps
 ```

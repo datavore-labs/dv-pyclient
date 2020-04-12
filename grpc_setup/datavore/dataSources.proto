@@ -177,10 +177,17 @@ enum ColumnType {
     Time = 2;
 }
 message QueryColumn {
-    string name = 1;
-    ColumnType type = 2;
+    string name = 1;                            //Name of the column
+    ColumnType type = 2;                        //Type of the column
+    repeated OptionalString stringFilter = 3;   //Zero for no filter, 1 or more combined in logical OR
+    repeated OptionalNumber numberFilter = 4;   //Zero for no filter, 1 element is equality, 2 elements is range( >=start and <end)
+    repeated OptionalTime timeFilter = 5;       //Zero for no filter, 1 element is equality, 2 elements is range( >=start and <end)
 }
+
+message LineQuery {
+    repeated QueryColumn columns = 1;
+}
+
 message DataSourceQueryRequest {
-    repeated QueryColumn queryColumns = 1;
-    repeated LineDefinition lines = 2;
+    repeated LineQuery lineQueries = 1;
 }

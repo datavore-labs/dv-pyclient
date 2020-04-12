@@ -4,13 +4,7 @@
 
 from setuptools import setup, find_packages
 
-with open('README.rst') as readme_file:
-    readme = readme_file.read()
-
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
-
-requirements = ['Click>=7.0', 'pandas', 'numpy', 'PyJWT', 'requests', 'ndjson', 'grpcio>=1.27.2']
+requirements = ['Click>=7.0', 'pandas', 'numpy', 'PyJWT', 'requests', 'ndjson', 'grpcio>=1.27.2', 'protobuf']
 
 setup_requirements = ['pytest-runner', ]
 
@@ -39,7 +33,7 @@ setup(
     },
     install_requires=requirements,
     license="MIT license",
-    long_description=readme + '\n\n' + history,
+    long_description="dv_pyclient package for client and grpc services",
     include_package_data=True,
     keywords='dv_pyclient',
     name='dv_pyclient',
@@ -48,6 +42,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/""/dv_pyclient',
-    version='0.2',
+    version='0.2.5',
     zip_safe=False,
 )

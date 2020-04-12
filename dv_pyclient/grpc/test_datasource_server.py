@@ -6,6 +6,7 @@ from io import StringIO
 import pandas as pd
 import numpy as np
 import google.protobuf.wrappers_pb2 as proto
+import time
 
 # Some import parameters
 ds_id = "ds_id_test_grpc"
@@ -49,33 +50,26 @@ class TestDatasource(rpc.RemoteDataSourceServicer):
         datasources = [api.DataSourceResult(id=ds_id, name=ds_name)]
         return api.ListDataSourcesReply(dataSources=datasources)
 
-    def dataSourceQuery(self, request: api.DataSourceQueryRequest, context) -> api.DataRecordsReply:
-        pass
+    def dataSourceQuery(self, request: api.DataSourceQueryRequest, context):
+        line_queries = request.lineQueries
+        if len(line_queries) == 0:
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details(f'No lines specified in request')
+            raise RuntimeError('Invalid dataSourceQuery request')
+        yield from util.dataSourceQueryStreamPandas(self.df, request)
 
     def dataSourceUniques(self, request: api.DataSourceUniquesRequest, context):
         if request.dataSourceId != ds_id:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details(f'Datasource id does not equal requested id: {request.dataSourceId}')
-            raise RuntimeError('Invalid datasource request')
-
-        chunk_size = 100
-        columns = list(request.columns)
-        unique_df = self.df[columns].drop_duplicates()
-        for chunk_df in np.array_split(unique_df, chunk_size):
-            data_records = []
-            for idx, row in chunk_df.iterrows():
-                strings, numbers, times = [], [], []
-                for c in columns:
-                    col_value = row[c] if row[c] is not None else ""
-                    strings.append(api.OptionalString(value=proto.StringValue(value=col_value)))
-                data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=[]))
-            yield api.DataRecordsReply(records=data_records)
+            raise RuntimeError('Invalid dataSourceUnique request')
+        yield from util.dataSourceUniquesStreamPandas(self.df, request)
 
     def sampleDataSourceMeta(self, request: api.DataSourceMetaRequest, context) -> api.DataSourceMetaReply:
         if request.dataSourceId != ds_id:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details(f'Datasource id does not equal requested id: {request.dataSourceId}')
-            raise RuntimeError('Invalid datasource request')
+            raise RuntimeError('Invalid sampleDataSourceMeta request')
 
         reply = util.getDatasourceMetaReplyPandas(self.df, ds_id, ds_name)
         context.set_code(grpc.StatusCode.OK)
