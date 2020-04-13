@@ -7,7 +7,7 @@ from pandas.core.dtypes.common import (
 import pandas as pd
 import google.protobuf.wrappers_pb2 as proto
 import numpy as np
-
+import google
 
 def __isTimeDataType(dataType):
     return dataType in frozenset(['TimeColumnConfig', 'StaticTimeConfig'])
@@ -48,6 +48,15 @@ def __getDataLoadMappings(columnConfigs, valueModifiers):
         valueLabelColumn=[],
         timeTuples=timeTuples
     )
+
+def __columnTypeToString(projectedColumn):
+    if api.ColumnType.Value("String") == projectedColumn.type:
+        return "String"
+    if api.ColumnType.Value("Time") == projectedColumn.type:
+        return "Time"
+    if api.ColumnType.Value("Number") == projectedColumn.type:
+        return "Number"
+
 
 
 #######################################
@@ -117,6 +126,25 @@ def __getColumnConfigsPandas(df: pd.DataFrame):
     return list(zip(typedColumnConfigs, pythonConfigs))
 
 
+def __makeLineQueryPandas(line_query):
+    filterExprs = []
+    # Make the filter expression from columns
+    for filt in line_query.filters:
+        if len(filt.stringFilter.stringFilter) > 0:
+            filt_str = ' or '.join(f'{filt.stringFilter.name} == "{filtValue}"' for filtValue in filt.stringFilter.stringFilter)
+            filterExprs.append(f'({filt_str})')
+        elif len(filt.numberFilter.numberFilter):
+            if len(filt.numberFilter.numberFilter) == 1:
+                filt_num = f'{filt.numberFilter.name} == {filt.numberFilter.numberFilter[0]}'
+                filterExprs.append(f'({filt_num})')
+            else:
+                filt_num = f'{filt.numberFilter.name} >= {filt.numberFilter.numberFilter[0]} and {filt.numberFilter.name} < {filt.numberFilter.numberFilter[1]}'
+                filterExprs.append(f'({filt_num})')
+        #TODO: Support time filter after server format is known
+        elif type == "Time":
+            pass
+    return filterExprs
+
 def getDatasourceMetaReplyPandas(df, ds_id, ds_name):
     typedColumnConfigsAndMeta = __getColumnConfigsPandas(df)
     valueModifiers = []
@@ -151,53 +179,46 @@ def dataSourceUniquesStreamPandas(df, request):
 def dataSourceQueryStreamPandas(df, request):
     # Make and resolve the data for each line requested.
     # We yield batches of DataRecordsReply, one for each line requested
-    for querystr in request.lineQueries:
-        columns = []
-        column_types = []
-        filterExprs = []
-        # Make the filter expression from columns
-        for filt in querystr.columns:
-            columns.append(filt.name)
-            column_types.append(filt.type)
-            if filt.type == api.ColumnType.Value("String") and len(filt.stringFilter) > 0:
-                filt_str = ' or '.join(f'{filt.name} == "{filtValue.value.value}"' for filtValue in filt.stringFilter)
-                filterExprs.append(f'({filt_str})')
-            elif filt.type == api.ColumnType.Value("Number") and len(filt.numberFilter) > 0:
-                if len(filt.numberFilter) == 1:
-                    filt_num = f'{filt.name} == {filt.numberFilter[0].value.value}'
-                    filterExprs.append(f'({filt_num})')
-                else:
-                    filt_num = f'{filt.name} >= {filt.numberFilter[0].value.value} and {filt.name} < {filt.numberFilter[1].value.value}'
-                    filterExprs.append(f'({filt_num})')
-            #TODO: Support time filter after server format is known
-            elif type == "Time":
-                if len(filt.timeFilter) == 1:
-                    f'{filt.name} == {filt.timeFilter[0].value.value}'
-                else:
-                    f'{filt.name} >= {filt.timeFilter[0].value.value} and {filt.name} < {filt.timeFilter[1].value.value}'
+    project_cols = list(map(lambda c:  c.name, request.projectColumns))
+    column_types = list(map(lambda c: __columnTypeToString(c), request.projectColumns))
+
+    string_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "String", zip(project_cols, column_types))))
+    string_dict = dict([(item, index) for (index, item) in enumerate(string_cols)])
+
+    number_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "Number", zip(project_cols, column_types))))
+    number_dict = dict([(item, index) for (index, item) in enumerate(number_cols)])
+
+    time_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "Time", zip(project_cols, column_types))))
+    time_dict = dict([(item, index) for (index, item) in enumerate(time_cols)])
+
+    for line_query in request.lineQueries:
+        filterExprs = __makeLineQueryPandas(line_query)
         line_query = ' and '.join(filterExprs)
 
         # Filter data
-        line_result_df = df[columns].query(line_query)
+        line_result_df = df[project_cols].query(line_query)
         # Inplace convert all date columns to unixepoch
         date_cols = list(map(lambda x: x[0],
-                             filter(lambda t: t[1] == api.ColumnType.Value("Time"), list(zip(columns, column_types)))))
+                             filter(lambda t: t[1] == "Time",
+                                    list(zip(project_cols, column_types)))))
         for date_col in date_cols:
             line_result_df[date_col] = line_result_df[date_col].astype(np.int64)
 
-        # TODO: Sort values by date columns
-        line_result_df.sort_values(by=date_col, inplace=True)
+        line_result_df.sort_values(by=string_cols + time_cols, inplace=True)
 
         # Serialize
         data_records = []
         for idx, row in line_result_df.iterrows():
-            strings, numbers, times = [], [], []
-            for c, c_type in zip(columns, column_types):
-                if c_type == api.ColumnType.Value("String"):
-                    strings.append(api.OptionalString(value=proto.StringValue(value=row[c])))
-                elif c_type == api.ColumnType.Value("Number"):
-                    numbers.append(api.OptionalNumber(value=proto.DoubleValue(value=row[c])))
-                elif c_type == api.ColumnType.Value("Time"):
-                    times.append(api.OptionalTime(value=proto.Int64Value(value=row[c])))
+            strings = [api.OptionalString(value=proto.StringValue(value=None))] * len(string_cols)
+            numbers = [api.OptionalNumber(value=proto.DoubleValue(value=None))] * len(number_cols)
+            times = [api.OptionalTime(value=proto.Int64Value(value=None))] * len(time_cols)
+
+            for c, c_type in zip(project_cols, column_types):
+                if c_type == "String":
+                    strings[string_dict[c]] = api.OptionalString(value=proto.StringValue(value=row[c]))
+                elif c_type == "Number":
+                    numbers[number_dict[c]] = api.OptionalNumber(value=proto.DoubleValue(value=row[c]))
+                elif c_type == "Time":
+                    times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=row[c]))
             data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
         yield api.DataRecordsReply(records=data_records)

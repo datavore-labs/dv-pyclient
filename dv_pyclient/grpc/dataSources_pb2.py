@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.datavorelabs.common.protos',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\"dv_pyclient/grpc/dataSources.proto\x12\x1e\x63om.datavorelabs.common.protos\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1e\x64v_pyclient/grpc/scalapb.proto\"X\n\x0eOptionalString\x12+\n\x05value\x18\x01 \x01(\x0b\x32\x1c.google.protobuf.StringValue:\x19\xe2?\x16\"\x14scala.Option[String]\"X\n\x0eOptionalNumber\x12+\n\x05value\x18\x01 \x01(\x0b\x32\x1c.google.protobuf.DoubleValue:\x19\xe2?\x16\"\x14scala.Option[Double]\"S\n\x0cOptionalTime\x12*\n\x05value\x18\x01 \x01(\x0b\x32\x1b.google.protobuf.Int64Value:\x17\xe2?\x14\"\x12scala.Option[Long]\"\xba\x02\n\nDataRecord\x12\x64\n\x07strings\x18\x01 \x03(\x0b\x32..com.datavorelabs.common.protos.OptionalStringB#\xe2? \x1a\x1e\x63ollection.mutable.ArrayBuffer\x12\x64\n\x07numbers\x18\x02 \x03(\x0b\x32..com.datavorelabs.common.protos.OptionalNumberB#\xe2? \x1a\x1e\x63ollection.mutable.ArrayBuffer\x12`\n\x05times\x18\x03 \x03(\x0b\x32,.com.datavorelabs.common.protos.OptionalTimeB#\xe2? \x1a\x1e\x63ollection.mutable.ArrayBuffer\"O\n\x10\x44\x61taRecordsReply\x12;\n\x07records\x18\x01 \x03(\x0b\x32*.com.datavorelabs.common.protos.DataRecord\"\x18\n\x16ListDataSourcesRequest\",\n\x10\x44\x61taSourceResult\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\"]\n\x14ListDataSourcesReply\x12\x45\n\x0b\x64\x61taSources\x18\x01 \x03(\x0b\x32\x30.com.datavorelabs.common.protos.DataSourceResult\"A\n\x18\x44\x61taSourceUniquesRequest\x12\x14\n\x0c\x64\x61taSourceId\x18\x01 \x01(\t\x12\x0f\n\x07\x63olumns\x18\x02 \x03(\t\"-\n\x15\x44\x61taSourceMetaRequest\x12\x14\n\x0c\x64\x61taSourceId\x18\x01 \x01(\t\"\xad\x01\n\x12StringColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\x12\x43\n\x08modifier\x18\x03 \x01(\x0e\x32\x31.com.datavorelabs.common.protos.PredicateModifier\x12.\n\x08ontology\x18\x04 \x01(\x0b\x32\x1c.google.protobuf.StringValue\"8\n\x12NumberColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\"J\n\x10TimeColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\x12\x12\n\ndateFormat\x18\x03 \x01(\t\"\xe0\x01\n\x18StaticStringColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\x12+\n\x05value\x18\x03 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12\x43\n\x08modifier\x18\x04 \x01(\x0e\x32\x31.com.datavorelabs.common.protos.PredicateModifier\x12.\n\x08ontology\x18\x05 \x01(\x0b\x32\x1c.google.protobuf.StringValue\"k\n\x18StaticNumberColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\x12+\n\x05value\x18\x03 \x01(\x0b\x32\x1c.google.protobuf.DoubleValue\"h\n\x16StaticTimeColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\x12*\n\x05value\x18\x03 \x01(\x0b\x32\x1b.google.protobuf.Int64Value\"\xa6\x04\n\x0c\x43olumnConfig\x12P\n\x12stringColumnConfig\x18\x01 \x01(\x0b\x32\x32.com.datavorelabs.common.protos.StringColumnConfigH\x00\x12P\n\x12numberColumnConfig\x18\x02 \x01(\x0b\x32\x32.com.datavorelabs.common.protos.NumberColumnConfigH\x00\x12L\n\x10timeColumnConfig\x18\x03 \x01(\x0b\x32\x30.com.datavorelabs.common.protos.TimeColumnConfigH\x00\x12\\\n\x18staticStringColumnConfig\x18\x04 \x01(\x0b\x32\x38.com.datavorelabs.common.protos.StaticStringColumnConfigH\x00\x12\\\n\x18staticNumberColumnConfig\x18\x05 \x01(\x0b\x32\x38.com.datavorelabs.common.protos.StaticNumberColumnConfigH\x00\x12X\n\x16staticTimeColumnConfig\x18\x06 \x01(\x0b\x32\x36.com.datavorelabs.common.protos.StaticTimeColumnConfigH\x00\x42\x0e\n\x0c\x63olumnConfig\":\n\x0fTimeTupleConfig\x12\x12\n\ntimeColumn\x18\x01 \x01(\t\x12\x13\n\x0bvalueColumn\x18\x02 \x01(\t\"\xe2\x01\n\x0f\x44\x61taLoadMapping\x12\x12\n\nkeyColumns\x18\x01 \x03(\t\x12\x16\n\x0evalueModifiers\x18\x02 \x03(\t\x12\x13\n\x0btimeColumns\x18\x03 \x03(\t\x12/\n\tfrequency\x18\x04 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12\x18\n\x10valueLabelColumn\x18\x05 \x03(\t\x12\x43\n\ntimeTuples\x18\x06 \x03(\x0b\x32/.com.datavorelabs.common.protos.TimeTupleConfig\"2\n\x0c\x43olumnSample\x12\x12\n\ncolumnName\x18\x01 \x01(\t\x12\x0e\n\x06values\x18\x02 \x03(\t\"K\n\tRowSample\x12>\n\x06values\x18\x02 \x03(\x0b\x32..com.datavorelabs.common.protos.OptionalString\"\xd6\x02\n\x13\x44\x61taSourceMetaReply\x12\x14\n\x0c\x64\x61taSourceId\x18\x01 \x01(\t\x12\x16\n\x0e\x64\x61taSourceName\x18\x02 \x01(\t\x12\x43\n\rcolumnConfigs\x18\x03 \x03(\x0b\x32,.com.datavorelabs.common.protos.ColumnConfig\x12H\n\x0f\x64\x61taLoadMapping\x18\x04 \x01(\x0b\x32/.com.datavorelabs.common.protos.DataLoadMapping\x12=\n\nsampleData\x18\x05 \x03(\x0b\x32).com.datavorelabs.common.protos.RowSample\x12\x43\n\rcolumnSamples\x18\x06 \x03(\x0b\x32,.com.datavorelabs.common.protos.ColumnSample\"\xe4\x01\n\x0eLineDefinition\x12\x17\n\x0fkeyPredicateIds\x18\x01 \x03(\t\x12?\n\x07keyPath\x18\x02 \x03(\x0b\x32..com.datavorelabs.common.protos.OptionalString\x12\x17\n\x0ftimePredicateId\x18\x03 \x01(\t\x12\x18\n\x10valuePredicateId\x18\x04 \x01(\t\x12/\n\tfrequency\x18\x05 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12\x14\n\x0c\x64\x61taSourceId\x18\x06 \x01(\t\"\xa3\x02\n\x0bQueryColumn\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x38\n\x04type\x18\x02 \x01(\x0e\x32*.com.datavorelabs.common.protos.ColumnType\x12\x44\n\x0cstringFilter\x18\x03 \x03(\x0b\x32..com.datavorelabs.common.protos.OptionalString\x12\x44\n\x0cnumberFilter\x18\x04 \x03(\x0b\x32..com.datavorelabs.common.protos.OptionalNumber\x12@\n\ntimeFilter\x18\x05 \x03(\x0b\x32,.com.datavorelabs.common.protos.OptionalTime\"I\n\tLineQuery\x12<\n\x07\x63olumns\x18\x01 \x03(\x0b\x32+.com.datavorelabs.common.protos.QueryColumn\"X\n\x16\x44\x61taSourceQueryRequest\x12>\n\x0blineQueries\x18\x01 \x03(\x0b\x32).com.datavorelabs.common.protos.LineQuery*B\n\x11PredicateModifier\x12\x08\n\x04None\x10\x00\x12\x10\n\x0cTimeModifier\x10\x01\x12\x11\n\rValueModifier\x10\x02*.\n\nColumnType\x12\n\n\x06String\x10\x00\x12\n\n\x06Number\x10\x01\x12\x08\n\x04Time\x10\x02\x32\xa4\x04\n\x10RemoteDataSource\x12\x81\x01\n\x0fListDataSources\x12\x36.com.datavorelabs.common.protos.ListDataSourcesRequest\x1a\x34.com.datavorelabs.common.protos.ListDataSourcesReply\"\x00\x12\x83\x01\n\x11\x64\x61taSourceUniques\x12\x38.com.datavorelabs.common.protos.DataSourceUniquesRequest\x1a\x30.com.datavorelabs.common.protos.DataRecordsReply\"\x00\x30\x01\x12\x84\x01\n\x14sampleDataSourceMeta\x12\x35.com.datavorelabs.common.protos.DataSourceMetaRequest\x1a\x33.com.datavorelabs.common.protos.DataSourceMetaReply\"\x00\x12\x7f\n\x0f\x64\x61taSourceQuery\x12\x36.com.datavorelabs.common.protos.DataSourceQueryRequest\x1a\x30.com.datavorelabs.common.protos.DataRecordsReply\"\x00\x30\x01\x62\x06proto3'
+  serialized_pb=b'\n\"dv_pyclient/grpc/dataSources.proto\x12\x1e\x63om.datavorelabs.common.protos\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1e\x64v_pyclient/grpc/scalapb.proto\"X\n\x0eOptionalString\x12+\n\x05value\x18\x01 \x01(\x0b\x32\x1c.google.protobuf.StringValue:\x19\xe2?\x16\"\x14scala.Option[String]\"X\n\x0eOptionalNumber\x12+\n\x05value\x18\x01 \x01(\x0b\x32\x1c.google.protobuf.DoubleValue:\x19\xe2?\x16\"\x14scala.Option[Double]\"S\n\x0cOptionalTime\x12*\n\x05value\x18\x01 \x01(\x0b\x32\x1b.google.protobuf.Int64Value:\x17\xe2?\x14\"\x12scala.Option[Long]\"\xba\x02\n\nDataRecord\x12\x64\n\x07strings\x18\x01 \x03(\x0b\x32..com.datavorelabs.common.protos.OptionalStringB#\xe2? \x1a\x1e\x63ollection.mutable.ArrayBuffer\x12\x64\n\x07numbers\x18\x02 \x03(\x0b\x32..com.datavorelabs.common.protos.OptionalNumberB#\xe2? \x1a\x1e\x63ollection.mutable.ArrayBuffer\x12`\n\x05times\x18\x03 \x03(\x0b\x32,.com.datavorelabs.common.protos.OptionalTimeB#\xe2? \x1a\x1e\x63ollection.mutable.ArrayBuffer\"O\n\x10\x44\x61taRecordsReply\x12;\n\x07records\x18\x01 \x03(\x0b\x32*.com.datavorelabs.common.protos.DataRecord\"\x18\n\x16ListDataSourcesRequest\",\n\x10\x44\x61taSourceResult\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\"]\n\x14ListDataSourcesReply\x12\x45\n\x0b\x64\x61taSources\x18\x01 \x03(\x0b\x32\x30.com.datavorelabs.common.protos.DataSourceResult\"A\n\x18\x44\x61taSourceUniquesRequest\x12\x14\n\x0c\x64\x61taSourceId\x18\x01 \x01(\t\x12\x0f\n\x07\x63olumns\x18\x02 \x03(\t\"-\n\x15\x44\x61taSourceMetaRequest\x12\x14\n\x0c\x64\x61taSourceId\x18\x01 \x01(\t\"\xad\x01\n\x12StringColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\x12\x43\n\x08modifier\x18\x03 \x01(\x0e\x32\x31.com.datavorelabs.common.protos.PredicateModifier\x12.\n\x08ontology\x18\x04 \x01(\x0b\x32\x1c.google.protobuf.StringValue\"8\n\x12NumberColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\"J\n\x10TimeColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\x12\x12\n\ndateFormat\x18\x03 \x01(\t\"\xe0\x01\n\x18StaticStringColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\x12+\n\x05value\x18\x03 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12\x43\n\x08modifier\x18\x04 \x01(\x0e\x32\x31.com.datavorelabs.common.protos.PredicateModifier\x12.\n\x08ontology\x18\x05 \x01(\x0b\x32\x1c.google.protobuf.StringValue\"k\n\x18StaticNumberColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\x12+\n\x05value\x18\x03 \x01(\x0b\x32\x1c.google.protobuf.DoubleValue\"h\n\x16StaticTimeColumnConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplayLabel\x18\x02 \x01(\t\x12*\n\x05value\x18\x03 \x01(\x0b\x32\x1b.google.protobuf.Int64Value\"\xa6\x04\n\x0c\x43olumnConfig\x12P\n\x12stringColumnConfig\x18\x01 \x01(\x0b\x32\x32.com.datavorelabs.common.protos.StringColumnConfigH\x00\x12P\n\x12numberColumnConfig\x18\x02 \x01(\x0b\x32\x32.com.datavorelabs.common.protos.NumberColumnConfigH\x00\x12L\n\x10timeColumnConfig\x18\x03 \x01(\x0b\x32\x30.com.datavorelabs.common.protos.TimeColumnConfigH\x00\x12\\\n\x18staticStringColumnConfig\x18\x04 \x01(\x0b\x32\x38.com.datavorelabs.common.protos.StaticStringColumnConfigH\x00\x12\\\n\x18staticNumberColumnConfig\x18\x05 \x01(\x0b\x32\x38.com.datavorelabs.common.protos.StaticNumberColumnConfigH\x00\x12X\n\x16staticTimeColumnConfig\x18\x06 \x01(\x0b\x32\x36.com.datavorelabs.common.protos.StaticTimeColumnConfigH\x00\x42\x0e\n\x0c\x63olumnConfig\":\n\x0fTimeTupleConfig\x12\x12\n\ntimeColumn\x18\x01 \x01(\t\x12\x13\n\x0bvalueColumn\x18\x02 \x01(\t\"\xe2\x01\n\x0f\x44\x61taLoadMapping\x12\x12\n\nkeyColumns\x18\x01 \x03(\t\x12\x16\n\x0evalueModifiers\x18\x02 \x03(\t\x12\x13\n\x0btimeColumns\x18\x03 \x03(\t\x12/\n\tfrequency\x18\x04 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12\x18\n\x10valueLabelColumn\x18\x05 \x03(\t\x12\x43\n\ntimeTuples\x18\x06 \x03(\x0b\x32/.com.datavorelabs.common.protos.TimeTupleConfig\"2\n\x0c\x43olumnSample\x12\x12\n\ncolumnName\x18\x01 \x01(\t\x12\x0e\n\x06values\x18\x02 \x03(\t\"K\n\tRowSample\x12>\n\x06values\x18\x02 \x03(\x0b\x32..com.datavorelabs.common.protos.OptionalString\"\xd6\x02\n\x13\x44\x61taSourceMetaReply\x12\x14\n\x0c\x64\x61taSourceId\x18\x01 \x01(\t\x12\x16\n\x0e\x64\x61taSourceName\x18\x02 \x01(\t\x12\x43\n\rcolumnConfigs\x18\x03 \x03(\x0b\x32,.com.datavorelabs.common.protos.ColumnConfig\x12H\n\x0f\x64\x61taLoadMapping\x18\x04 \x01(\x0b\x32/.com.datavorelabs.common.protos.DataLoadMapping\x12=\n\nsampleData\x18\x05 \x03(\x0b\x32).com.datavorelabs.common.protos.RowSample\x12\x43\n\rcolumnSamples\x18\x06 \x03(\x0b\x32,.com.datavorelabs.common.protos.ColumnSample\"\xe4\x01\n\x0eLineDefinition\x12\x17\n\x0fkeyPredicateIds\x18\x01 \x03(\t\x12?\n\x07keyPath\x18\x02 \x03(\x0b\x32..com.datavorelabs.common.protos.OptionalString\x12\x17\n\x0ftimePredicateId\x18\x03 \x01(\t\x12\x18\n\x10valuePredicateId\x18\x04 \x01(\t\x12/\n\tfrequency\x18\x05 \x01(\x0b\x32\x1c.google.protobuf.StringValue\x12\x14\n\x0c\x64\x61taSourceId\x18\x06 \x01(\t\"W\n\rProjectColumn\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x38\n\x04type\x18\x02 \x01(\x0e\x32*.com.datavorelabs.common.protos.ColumnType\"\xea\x01\n\x0bQueryFilter\x12\x44\n\x0cstringFilter\x18\x01 \x01(\x0b\x32,.com.datavorelabs.common.protos.StringFilterH\x00\x12\x44\n\x0cnumberFilter\x18\x02 \x01(\x0b\x32,.com.datavorelabs.common.protos.NumberFilterH\x00\x12@\n\ntimeFilter\x18\x03 \x01(\x0b\x32*.com.datavorelabs.common.protos.TimeFilterH\x00\x42\r\n\x0bqueryFilter\"l\n\x0cStringFilter\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x38\n\x04type\x18\x02 \x01(\x0e\x32*.com.datavorelabs.common.protos.ColumnType\x12\x14\n\x0cstringFilter\x18\x03 \x03(\t\"l\n\x0cNumberFilter\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x38\n\x04type\x18\x02 \x01(\x0e\x32*.com.datavorelabs.common.protos.ColumnType\x12\x14\n\x0cnumberFilter\x18\x03 \x03(\x01\"h\n\nTimeFilter\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x38\n\x04type\x18\x02 \x01(\x0e\x32*.com.datavorelabs.common.protos.ColumnType\x12\x12\n\ntimeFilter\x18\x03 \x03(\x03\"I\n\tLineQuery\x12<\n\x07\x66ilters\x18\x01 \x03(\x0b\x32+.com.datavorelabs.common.protos.QueryFilter\"\x9f\x01\n\x16\x44\x61taSourceQueryRequest\x12>\n\x0blineQueries\x18\x01 \x03(\x0b\x32).com.datavorelabs.common.protos.LineQuery\x12\x45\n\x0eprojectColumns\x18\x02 \x03(\x0b\x32-.com.datavorelabs.common.protos.ProjectColumn*B\n\x11PredicateModifier\x12\x08\n\x04None\x10\x00\x12\x10\n\x0cTimeModifier\x10\x01\x12\x11\n\rValueModifier\x10\x02*.\n\nColumnType\x12\n\n\x06String\x10\x00\x12\n\n\x06Number\x10\x01\x12\x08\n\x04Time\x10\x02\x32\xa4\x04\n\x10RemoteDataSource\x12\x81\x01\n\x0fListDataSources\x12\x36.com.datavorelabs.common.protos.ListDataSourcesRequest\x1a\x34.com.datavorelabs.common.protos.ListDataSourcesReply\"\x00\x12\x83\x01\n\x11\x64\x61taSourceUniques\x12\x38.com.datavorelabs.common.protos.DataSourceUniquesRequest\x1a\x30.com.datavorelabs.common.protos.DataRecordsReply\"\x00\x30\x01\x12\x84\x01\n\x14sampleDataSourceMeta\x12\x35.com.datavorelabs.common.protos.DataSourceMetaRequest\x1a\x33.com.datavorelabs.common.protos.DataSourceMetaReply\"\x00\x12\x7f\n\x0f\x64\x61taSourceQuery\x12\x36.com.datavorelabs.common.protos.DataSourceQueryRequest\x1a\x30.com.datavorelabs.common.protos.DataRecordsReply\"\x00\x30\x01\x62\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_wrappers__pb2.DESCRIPTOR,dv__pyclient_dot_grpc_dot_scalapb__pb2.DESCRIPTOR,])
 
@@ -46,8 +46,8 @@ _PREDICATEMODIFIER = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3836,
-  serialized_end=3902,
+  serialized_start=4266,
+  serialized_end=4332,
 )
 _sym_db.RegisterEnumDescriptor(_PREDICATEMODIFIER)
 
@@ -73,8 +73,8 @@ _COLUMNTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3904,
-  serialized_end=3950,
+  serialized_start=4334,
+  serialized_end=4380,
 )
 _sym_db.RegisterEnumDescriptor(_COLUMNTYPE)
 
@@ -1077,44 +1077,116 @@ _LINEDEFINITION = _descriptor.Descriptor(
 )
 
 
-_QUERYCOLUMN = _descriptor.Descriptor(
-  name='QueryColumn',
-  full_name='com.datavorelabs.common.protos.QueryColumn',
+_PROJECTCOLUMN = _descriptor.Descriptor(
+  name='ProjectColumn',
+  full_name='com.datavorelabs.common.protos.ProjectColumn',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='com.datavorelabs.common.protos.QueryColumn.name', index=0,
+      name='name', full_name='com.datavorelabs.common.protos.ProjectColumn.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='type', full_name='com.datavorelabs.common.protos.QueryColumn.type', index=1,
+      name='type', full_name='com.datavorelabs.common.protos.ProjectColumn.type', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=3377,
+  serialized_end=3464,
+)
+
+
+_QUERYFILTER = _descriptor.Descriptor(
+  name='QueryFilter',
+  full_name='com.datavorelabs.common.protos.QueryFilter',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='stringFilter', full_name='com.datavorelabs.common.protos.QueryFilter.stringFilter', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='numberFilter', full_name='com.datavorelabs.common.protos.QueryFilter.numberFilter', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='timeFilter', full_name='com.datavorelabs.common.protos.QueryFilter.timeFilter', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='queryFilter', full_name='com.datavorelabs.common.protos.QueryFilter.queryFilter',
+      index=0, containing_type=None, fields=[]),
+  ],
+  serialized_start=3467,
+  serialized_end=3701,
+)
+
+
+_STRINGFILTER = _descriptor.Descriptor(
+  name='StringFilter',
+  full_name='com.datavorelabs.common.protos.StringFilter',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='com.datavorelabs.common.protos.StringFilter.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='type', full_name='com.datavorelabs.common.protos.StringFilter.type', index=1,
       number=2, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='stringFilter', full_name='com.datavorelabs.common.protos.QueryColumn.stringFilter', index=2,
-      number=3, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='numberFilter', full_name='com.datavorelabs.common.protos.QueryColumn.numberFilter', index=3,
-      number=4, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='timeFilter', full_name='com.datavorelabs.common.protos.QueryColumn.timeFilter', index=4,
-      number=5, type=11, cpp_type=10, label=3,
+      name='stringFilter', full_name='com.datavorelabs.common.protos.StringFilter.stringFilter', index=2,
+      number=3, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1131,8 +1203,98 @@ _QUERYCOLUMN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3378,
-  serialized_end=3669,
+  serialized_start=3703,
+  serialized_end=3811,
+)
+
+
+_NUMBERFILTER = _descriptor.Descriptor(
+  name='NumberFilter',
+  full_name='com.datavorelabs.common.protos.NumberFilter',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='com.datavorelabs.common.protos.NumberFilter.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='type', full_name='com.datavorelabs.common.protos.NumberFilter.type', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='numberFilter', full_name='com.datavorelabs.common.protos.NumberFilter.numberFilter', index=2,
+      number=3, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=3813,
+  serialized_end=3921,
+)
+
+
+_TIMEFILTER = _descriptor.Descriptor(
+  name='TimeFilter',
+  full_name='com.datavorelabs.common.protos.TimeFilter',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='com.datavorelabs.common.protos.TimeFilter.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='type', full_name='com.datavorelabs.common.protos.TimeFilter.type', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='timeFilter', full_name='com.datavorelabs.common.protos.TimeFilter.timeFilter', index=2,
+      number=3, type=3, cpp_type=2, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=3923,
+  serialized_end=4027,
 )
 
 
@@ -1144,7 +1306,7 @@ _LINEQUERY = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='columns', full_name='com.datavorelabs.common.protos.LineQuery.columns', index=0,
+      name='filters', full_name='com.datavorelabs.common.protos.LineQuery.filters', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -1162,8 +1324,8 @@ _LINEQUERY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3671,
-  serialized_end=3744,
+  serialized_start=4029,
+  serialized_end=4102,
 )
 
 
@@ -1181,6 +1343,13 @@ _DATASOURCEQUERYREQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='projectColumns', full_name='com.datavorelabs.common.protos.DataSourceQueryRequest.projectColumns', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -1193,8 +1362,8 @@ _DATASOURCEQUERYREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3746,
-  serialized_end=3834,
+  serialized_start=4105,
+  serialized_end=4264,
 )
 
 _OPTIONALSTRING.fields_by_name['value'].message_type = google_dot_protobuf_dot_wrappers__pb2._STRINGVALUE
@@ -1245,12 +1414,25 @@ _DATASOURCEMETAREPLY.fields_by_name['sampleData'].message_type = _ROWSAMPLE
 _DATASOURCEMETAREPLY.fields_by_name['columnSamples'].message_type = _COLUMNSAMPLE
 _LINEDEFINITION.fields_by_name['keyPath'].message_type = _OPTIONALSTRING
 _LINEDEFINITION.fields_by_name['frequency'].message_type = google_dot_protobuf_dot_wrappers__pb2._STRINGVALUE
-_QUERYCOLUMN.fields_by_name['type'].enum_type = _COLUMNTYPE
-_QUERYCOLUMN.fields_by_name['stringFilter'].message_type = _OPTIONALSTRING
-_QUERYCOLUMN.fields_by_name['numberFilter'].message_type = _OPTIONALNUMBER
-_QUERYCOLUMN.fields_by_name['timeFilter'].message_type = _OPTIONALTIME
-_LINEQUERY.fields_by_name['columns'].message_type = _QUERYCOLUMN
+_PROJECTCOLUMN.fields_by_name['type'].enum_type = _COLUMNTYPE
+_QUERYFILTER.fields_by_name['stringFilter'].message_type = _STRINGFILTER
+_QUERYFILTER.fields_by_name['numberFilter'].message_type = _NUMBERFILTER
+_QUERYFILTER.fields_by_name['timeFilter'].message_type = _TIMEFILTER
+_QUERYFILTER.oneofs_by_name['queryFilter'].fields.append(
+  _QUERYFILTER.fields_by_name['stringFilter'])
+_QUERYFILTER.fields_by_name['stringFilter'].containing_oneof = _QUERYFILTER.oneofs_by_name['queryFilter']
+_QUERYFILTER.oneofs_by_name['queryFilter'].fields.append(
+  _QUERYFILTER.fields_by_name['numberFilter'])
+_QUERYFILTER.fields_by_name['numberFilter'].containing_oneof = _QUERYFILTER.oneofs_by_name['queryFilter']
+_QUERYFILTER.oneofs_by_name['queryFilter'].fields.append(
+  _QUERYFILTER.fields_by_name['timeFilter'])
+_QUERYFILTER.fields_by_name['timeFilter'].containing_oneof = _QUERYFILTER.oneofs_by_name['queryFilter']
+_STRINGFILTER.fields_by_name['type'].enum_type = _COLUMNTYPE
+_NUMBERFILTER.fields_by_name['type'].enum_type = _COLUMNTYPE
+_TIMEFILTER.fields_by_name['type'].enum_type = _COLUMNTYPE
+_LINEQUERY.fields_by_name['filters'].message_type = _QUERYFILTER
 _DATASOURCEQUERYREQUEST.fields_by_name['lineQueries'].message_type = _LINEQUERY
+_DATASOURCEQUERYREQUEST.fields_by_name['projectColumns'].message_type = _PROJECTCOLUMN
 DESCRIPTOR.message_types_by_name['OptionalString'] = _OPTIONALSTRING
 DESCRIPTOR.message_types_by_name['OptionalNumber'] = _OPTIONALNUMBER
 DESCRIPTOR.message_types_by_name['OptionalTime'] = _OPTIONALTIME
@@ -1274,7 +1456,11 @@ DESCRIPTOR.message_types_by_name['ColumnSample'] = _COLUMNSAMPLE
 DESCRIPTOR.message_types_by_name['RowSample'] = _ROWSAMPLE
 DESCRIPTOR.message_types_by_name['DataSourceMetaReply'] = _DATASOURCEMETAREPLY
 DESCRIPTOR.message_types_by_name['LineDefinition'] = _LINEDEFINITION
-DESCRIPTOR.message_types_by_name['QueryColumn'] = _QUERYCOLUMN
+DESCRIPTOR.message_types_by_name['ProjectColumn'] = _PROJECTCOLUMN
+DESCRIPTOR.message_types_by_name['QueryFilter'] = _QUERYFILTER
+DESCRIPTOR.message_types_by_name['StringFilter'] = _STRINGFILTER
+DESCRIPTOR.message_types_by_name['NumberFilter'] = _NUMBERFILTER
+DESCRIPTOR.message_types_by_name['TimeFilter'] = _TIMEFILTER
 DESCRIPTOR.message_types_by_name['LineQuery'] = _LINEQUERY
 DESCRIPTOR.message_types_by_name['DataSourceQueryRequest'] = _DATASOURCEQUERYREQUEST
 DESCRIPTOR.enum_types_by_name['PredicateModifier'] = _PREDICATEMODIFIER
@@ -1442,12 +1628,40 @@ LineDefinition = _reflection.GeneratedProtocolMessageType('LineDefinition', (_me
   })
 _sym_db.RegisterMessage(LineDefinition)
 
-QueryColumn = _reflection.GeneratedProtocolMessageType('QueryColumn', (_message.Message,), {
-  'DESCRIPTOR' : _QUERYCOLUMN,
+ProjectColumn = _reflection.GeneratedProtocolMessageType('ProjectColumn', (_message.Message,), {
+  'DESCRIPTOR' : _PROJECTCOLUMN,
   '__module__' : 'dv_pyclient.grpc.dataSources_pb2'
-  # @@protoc_insertion_point(class_scope:com.datavorelabs.common.protos.QueryColumn)
+  # @@protoc_insertion_point(class_scope:com.datavorelabs.common.protos.ProjectColumn)
   })
-_sym_db.RegisterMessage(QueryColumn)
+_sym_db.RegisterMessage(ProjectColumn)
+
+QueryFilter = _reflection.GeneratedProtocolMessageType('QueryFilter', (_message.Message,), {
+  'DESCRIPTOR' : _QUERYFILTER,
+  '__module__' : 'dv_pyclient.grpc.dataSources_pb2'
+  # @@protoc_insertion_point(class_scope:com.datavorelabs.common.protos.QueryFilter)
+  })
+_sym_db.RegisterMessage(QueryFilter)
+
+StringFilter = _reflection.GeneratedProtocolMessageType('StringFilter', (_message.Message,), {
+  'DESCRIPTOR' : _STRINGFILTER,
+  '__module__' : 'dv_pyclient.grpc.dataSources_pb2'
+  # @@protoc_insertion_point(class_scope:com.datavorelabs.common.protos.StringFilter)
+  })
+_sym_db.RegisterMessage(StringFilter)
+
+NumberFilter = _reflection.GeneratedProtocolMessageType('NumberFilter', (_message.Message,), {
+  'DESCRIPTOR' : _NUMBERFILTER,
+  '__module__' : 'dv_pyclient.grpc.dataSources_pb2'
+  # @@protoc_insertion_point(class_scope:com.datavorelabs.common.protos.NumberFilter)
+  })
+_sym_db.RegisterMessage(NumberFilter)
+
+TimeFilter = _reflection.GeneratedProtocolMessageType('TimeFilter', (_message.Message,), {
+  'DESCRIPTOR' : _TIMEFILTER,
+  '__module__' : 'dv_pyclient.grpc.dataSources_pb2'
+  # @@protoc_insertion_point(class_scope:com.datavorelabs.common.protos.TimeFilter)
+  })
+_sym_db.RegisterMessage(TimeFilter)
 
 LineQuery = _reflection.GeneratedProtocolMessageType('LineQuery', (_message.Message,), {
   'DESCRIPTOR' : _LINEQUERY,
@@ -1477,8 +1691,8 @@ _REMOTEDATASOURCE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=3953,
-  serialized_end=4501,
+  serialized_start=4383,
+  serialized_end=4931,
   methods=[
   _descriptor.MethodDescriptor(
     name='ListDataSources',

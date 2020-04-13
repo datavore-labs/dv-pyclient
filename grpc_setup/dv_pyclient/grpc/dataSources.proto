@@ -176,18 +176,42 @@ enum ColumnType {
     Number = 1;
     Time = 2;
 }
-message QueryColumn {
+message ProjectColumn {
     string name = 1;                            //Name of the column
     ColumnType type = 2;                        //Type of the column
-    repeated OptionalString stringFilter = 3;   //Zero for no filter, 1 or more combined in logical OR
-    repeated OptionalNumber numberFilter = 4;   //Zero for no filter, 1 element is equality, 2 elements is range( >=start and <end)
-    repeated OptionalTime timeFilter = 5;       //Zero for no filter, 1 element is equality, 2 elements is range( >=start and <end)
+}
+
+message QueryFilter {
+    oneof queryFilter {
+        StringFilter stringFilter = 1;
+        NumberFilter numberFilter = 2;
+        TimeFilter timeFilter = 3;
+    }
+}
+
+message StringFilter {
+    string name = 1;                            //Name of the column
+    ColumnType type = 2;                        //Type of the column
+    repeated string stringFilter = 3;           //1 or more combined in logical OR
+}
+
+message NumberFilter {
+    string name = 1;                            //Name of the column
+    ColumnType type = 2;                        //Type of the column
+    repeated double numberFilter = 3;           //Zero for no filter, 1 element is equality, 2 elements is range( >=start and <end)
+}
+
+message TimeFilter {
+    string name = 1;                            //Name of the column
+    ColumnType type = 2;                        //Type of the column
+    repeated int64 timeFilter = 3;              //Zero for no filter, 1 element is equality, 2 elements is range( >=start and <end)
 }
 
 message LineQuery {
-    repeated QueryColumn columns = 1;
+    repeated QueryFilter filters = 1;
 }
 
 message DataSourceQueryRequest {
     repeated LineQuery lineQueries = 1;
+    repeated ProjectColumn projectColumns = 2;
 }
