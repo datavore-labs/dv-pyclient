@@ -1,5 +1,5 @@
-from dv_pyclient.grpc.datavore import dataSources_pb2 as api
-from dv_pyclient.grpc.datavore import dataSources_pb2_grpc as rpc
+from dv_pyclient.grpc import dataSources_pb2 as api
+from dv_pyclient.grpc import dataSources_pb2_grpc as rpc
 
 from sqlite3 import dbapi2 as sqlite
 import psycopg2 as postgres

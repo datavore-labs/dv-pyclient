@@ -25,7 +25,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description="Python Boilerplate contains all the boilerplate you need to create a Python package.",
+    description="Python client for datavore. Connection auth and grpc support",
     entry_points={
         'console_scripts': [
             'dv_pyclient=dv_pyclient.cli:main',
@@ -42,6 +42,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/datavore-labs/dv-pyclient',
-    version='0.3.1',
+    version='0.3.5',
     zip_safe=False,
 )

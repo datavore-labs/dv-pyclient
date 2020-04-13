@@ -1,4 +1,4 @@
-from dv_pyclient.grpc.datavore import dataSources_pb2 as api
+from dv_pyclient.grpc import dataSources_pb2 as api
 from pandas.core.dtypes.common import (
     is_string_dtype,
     is_numeric_dtype,
