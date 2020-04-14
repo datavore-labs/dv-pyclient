@@ -6,6 +6,7 @@ from pandas.core.dtypes.common import (
 )
 import pandas as pd
 import google.protobuf.wrappers_pb2 as proto
+from google.protobuf.json_format import MessageToJson
 import numpy as np
 import google
 import math
@@ -218,6 +219,7 @@ def __serializeDataFrame(df, project_cols, chunk_size = 100):
 
 
 def dataSourceUniquesStreamPandas(df, request, chunk_size = 100):
+    print("dataSourceUniquesStreamPandas", MessageToJson(request))
     columns = list(request.columns)
     unique_df = df[columns].drop_duplicates()
     # Run the serialize code
@@ -225,6 +227,7 @@ def dataSourceUniquesStreamPandas(df, request, chunk_size = 100):
 
 
 def dataSourceQueryStreamPandas(df, request):
+    print("dataSourceQueryStreamPandas", MessageToJson(request))
     # Make and resolve the data for each line requested.
     # We yield batches of DataRecordsReply, one for each line requested
     project_cols = list(map(lambda c:  c.name, request.projectColumns))
