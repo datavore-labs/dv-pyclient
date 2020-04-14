@@ -44,7 +44,7 @@ def __getDataLoadMappings(columnConfigs, valueModifiers):
         keyColumns=keyColumns,
         valueModifiers=valueModifiers,
         timeColumns=timeColumns,
-        frequency=proto.StringValue(value=None),
+        frequency=None,
         valueLabelColumn=[],
         timeTuples=timeTuples
     )
