@@ -109,8 +109,8 @@ def __getColumnConfigsPandas(df: pd.DataFrame):
             typed_conf = api.ColumnConfig(stringColumnConfig=api.StringColumnConfig(
                 name=name,
                 displayLabel=name,
-                modifier=api.PredicateModifier.Value('None'),
-                ontology=proto.StringValue(value=None)
+                modifier=None,
+                ontology=None
             ))
             typedColumnConfigs.append(typed_conf)
         elif baseConfig['dataType'] == 'NumberColumnConfig':
