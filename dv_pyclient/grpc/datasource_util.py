@@ -161,19 +161,50 @@ def getDatasourceMetaReplyPandas(df, ds_id, ds_name):
     )
 
 
+# Iterate a dataframe's rows as api.DataRecordsReply
+# with timestamps serialized as unix time
+# mutates the data frame
+def __serializeDataFrame(df, columns, chunk_size = 100):
+    # Partitioning our columns into [string, number, time]
+    project_cols = list(map(lambda c:  c.name, columns))
+    column_types = list(map(lambda c: __columnTypeToString(c), columns))
+
+    string_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "String", zip(project_cols, column_types))))
+    string_dict = dict([(item, index) for (index, item) in enumerate(string_cols)])
+
+    number_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "Number", zip(project_cols, column_types))))
+    number_dict = dict([(item, index) for (index, item) in enumerate(number_cols)])
+
+    time_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "Time", zip(project_cols, column_types))))
+    time_dict = dict([(item, index) for (index, item) in enumerate(time_cols)])
+
+    # @todo: transform times outside
+    # # Transform our time columns into unix timestamps
+    # df[time_cols] = df[time_cols].astype(np.int64)
+
+    for chunk_df in np.array_split(df, chunk_size):
+        data_records = []
+        for _, row in chunk_df.iterrows():
+            strings = [api.OptionalString(value=proto.StringValue(value=None))] * len(string_cols)
+            numbers = [api.OptionalNumber(value=proto.DoubleValue(value=None))] * len(number_cols)
+            times = [api.OptionalTime(value=proto.Int64Value(value=None))] * len(time_cols)
+
+            for c, c_type in zip(project_cols, column_types):
+                if c_type == "String":
+                    strings[string_dict[c]] = api.OptionalString(value=proto.StringValue(value=row[c]))
+                elif c_type == "Number":
+                    numbers[number_dict[c]] = api.OptionalNumber(value=proto.DoubleValue(value=row[c]))
+                elif c_type == "Time":
+                    times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=row[c]))
+            data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
+        yield api.DataRecordsReply(records=data_records)
+
+
 def dataSourceUniquesStreamPandas(df, request):
     chunk_size = 100  # Determines the number of records per rpc batch
     columns = list(request.columns)
     unique_df = df[columns].drop_duplicates()
-    for chunk_df in np.array_split(unique_df, chunk_size):
-        data_records = []
-        for idx, row in chunk_df.iterrows():
-            strings, numbers, times = [], [], []
-            for c in columns:
-                col_value = row[c] if row[c] is not None else ""
-                strings.append(api.OptionalString(value=proto.StringValue(value=col_value)))
-            data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
-        yield api.DataRecordsReply(records=data_records)
+    __serializeDataFrame(unique_df, columns, chunk_size)
 
 
 def dataSourceQueryStreamPandas(df, request):
