@@ -214,8 +214,6 @@ def __serializeDataFrame(df, project_cols, chunk_size = 100):
                     else:
                         times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=row[c].value))
             data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
-            print("PUSH RECORD")
-        print("SEND RECORDS")
         yield api.DataRecordsReply(records=data_records)
 
 
