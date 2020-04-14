@@ -2,6 +2,6 @@
 
 __author__ = """Datavore Labs"""
 __email__ = 'info@datavorelabs.com'
-__version__ = '0.4.8'
+__version__ = '0.4.9'
 
 from .dv_pyclient import *
