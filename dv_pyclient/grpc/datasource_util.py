@@ -201,9 +201,17 @@ def __serializeDataFrame(df, columns, chunk_size = 100):
 
 
 def dataSourceUniquesStreamPandas(df, request):
-    chunk_size = 100  # Determines the number of records per rpc batch
+    chunk_size = 100
     columns = list(request.columns)
     unique_df = df[columns].drop_duplicates()
+
+    # Convert our times to unix timestamps
+    datesOnly = list(
+        unique_df.select_dtypes(include=[np.datetime64]).columns
+    )
+    unique_df[datesOnly] = unique_df[datesOnly].astype(np.int64)
+
+    # Run the serialize code
     __serializeDataFrame(unique_df, columns, chunk_size)
 
 
