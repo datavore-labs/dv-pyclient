@@ -176,6 +176,9 @@ def __dataTypeToString(dataType):
         return "String"
     raise Exception(f'Unsupprted dataType: {dataType}')
 
+def __tsToUnixEpochSeconds(timeStamp):
+    return np.int_(timeStamp.value / 10**9)
+
 # Iterate a dataframe's rows as api.DataRecordsReply
 # time columns must be serialized as numbers prior to this
 def __serializeDataFrame(df, project_cols, chunk_size = 100):
@@ -213,7 +216,7 @@ def __serializeDataFrame(df, project_cols, chunk_size = 100):
                     if row[c] == None or math.isnan(row[c].value):
                         times[time_dict[c]] = api.OptionalTime(value=None)
                     else:
-                        times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=row[c].value))
+                        times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=__tsToUnixEpochSeconds(row[c])))
             data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
         yield api.DataRecordsReply(records=data_records)
 
@@ -274,7 +277,7 @@ def dataSourceQueryStreamPandas(df, request):
                         times[time_dict[c]] = api.OptionalTime(value=None)
                     else:
                         # read time as .value
-                        times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=row[c].value))
+                        times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=__tsToUnixEpochSeconds(row[c])))
 
             data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
         yield api.DataRecordsReply(records=data_records)
