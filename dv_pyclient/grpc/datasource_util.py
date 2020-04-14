@@ -64,12 +64,15 @@ def __columnTypeToString(projectedColumn):
 ### Pandas helpers to read meta
 ############
 def __getColumnTypeOptions(dType, name):
-    if is_numeric_dtype(dType):
-        return {'dataType': 'NumberColumnConfig', 'name': name}
-    elif is_string_dtype(dType):
-        return {'dataType': 'StringColumnConfig', 'name': name}
     if is_datetime64_any_dtype(dType):
         return {'dateFormat': 'ISO_DATE', 'dataType': 'TimeColumnConfig', 'name': name}
+
+    if is_numeric_dtype(dType):
+        return {'dataType': 'NumberColumnConfig', 'name': name}
+
+    if is_string_dtype(dType):
+        return {'dataType': 'StringColumnConfig', 'name': name}
+
     raise Exception(f'Unsupprted dType: {dType}')
 
 
@@ -206,10 +209,10 @@ def __serializeDataFrame(df, project_cols, chunk_size = 100):
                     else:
                         numbers[number_dict[c]] = api.OptionalNumber(value=proto.DoubleValue(value=row[c]))
                 elif c_type == "Time":
-                    if row[c] == None or math.isnan(row[c]):
+                    if row[c] == None or math.isnan(row[c].value):
                         times[time_dict[c]] = api.OptionalTime(value=None)
                     else:
-                        times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=row[c]))
+                        times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=row[c].value))
             data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
             print("PUSH RECORD")
         print("SEND RECORDS")
@@ -219,13 +222,6 @@ def __serializeDataFrame(df, project_cols, chunk_size = 100):
 def dataSourceUniquesStreamPandas(df, request, chunk_size = 100):
     columns = list(request.columns)
     unique_df = df[columns].drop_duplicates()
-
-    # Convert our times to unix timestamps
-    datesOnly = list(
-        unique_df.select_dtypes(include=[np.datetime64]).columns
-    )
-    unique_df[datesOnly] = unique_df[datesOnly].astype(np.int64)
-
     # Run the serialize code
     yield from __serializeDataFrame(unique_df, columns, chunk_size)
 
@@ -251,12 +247,6 @@ def dataSourceQueryStreamPandas(df, request):
 
         # Filter data
         line_result_df = df[project_cols].query(line_query)
-        # Inplace convert all date columns to unixepoch
-        date_cols = list(map(lambda x: x[0],
-                             filter(lambda t: t[1] == "Time",
-                                    list(zip(project_cols, column_types)))))
-        for date_col in date_cols:
-            line_result_df[date_col] = line_result_df[date_col].astype(np.int64)
 
         line_result_df.sort_values(by=string_cols + time_cols, inplace=True)
 
@@ -279,10 +269,11 @@ def dataSourceQueryStreamPandas(df, request):
                     else:
                         numbers[number_dict[c]] = api.OptionalNumber(value=proto.DoubleValue(value=row[c]))
                 elif c_type == "Time":
-                    if row[c] == None or math.isnan(row[c]):
+                    if row[c] == None or math.isnan(row[c].value):
                         times[time_dict[c]] = api.OptionalTime(value=None)
                     else:
-                        times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=row[c]))
+                        # read time as .value
+                        times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=row[c].value))
 
             data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
         yield api.DataRecordsReply(records=data_records)

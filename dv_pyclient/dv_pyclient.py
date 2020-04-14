@@ -49,6 +49,11 @@ def __df_empty(columns, dtypes, index=None):
 
 
 def __getColumnTypeOptions(dType):
+    if (is_datetime64_any_dtype(dType)):
+        return {
+            'dateFormat': 'ISO_DATE_TIME',
+            'dataType': 'TimeColumnConfig',
+        }
     if (is_numeric_dtype(dType)):
         return {
             'dataType': 'NumberColumnConfig',
@@ -56,11 +61,6 @@ def __getColumnTypeOptions(dType):
     if (is_string_dtype(dType)):
         return {
             'dataType': 'StringColumnConfig',
-        }
-    if (is_datetime64_any_dtype(dType)):
-        return {
-            'dateFormat': 'ISO_DATE_TIME',
-            'dataType': 'TimeColumnConfig',
         }
     raise Exception(f'Unsupprted dType: {dType}')
 
