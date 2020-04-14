@@ -1,7 +1,6 @@
 from dv_pyclient.grpc import dataSources_pb2 as api
 from dv_pyclient.grpc import dataSources_pb2_grpc as rpc
 from dv_pyclient.grpc import datasource_util as util
-from dv_pyclient.grpc import datasource_util as util
 import grpc
 
 

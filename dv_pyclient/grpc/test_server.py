@@ -1,10 +1,10 @@
 from dv_pyclient.grpc import base_datasource_pandas as base
+from dv_pyclient.grpc import dataSources_pb2_grpc as rpc
 import pandas as pd
 from io import StringIO
 from concurrent import futures
 import logging
 import grpc
-import dv_pyclient.grpc.dataSources_pb2_grpc as rpc
 
 
 # Some import parameters

@@ -131,7 +131,7 @@ def __makeLineQueryPandas(line_query):
     # Make the filter expression from columns
     for filt in line_query.filters:
         if len(filt.stringFilter.stringFilter) > 0:
-            filt_str = ' or '.join(f'{filt.stringFilter.name} == "{filtValue}"' for filtValue in filt.stringFilter.stringFilter)
+            filt_str = ' or '.join(f'{filt.stringFilter.name} == "{filtValue.value.value}"' for filtValue in filt.stringFilter.stringFilter)
             filterExprs.append(f'({filt_str})')
         elif len(filt.numberFilter.numberFilter):
             if len(filt.numberFilter.numberFilter) == 1:
