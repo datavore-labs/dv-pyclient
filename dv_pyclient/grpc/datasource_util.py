@@ -251,53 +251,26 @@ def dataSourceUniquesStreamPandas(df, request, chunk_size = 100):
 
 def dataSourceQueryStreamPandas(df, request):
     print("dataSourceQueryStreamPandas", MessageToJson(request))
-    # Make and resolve the data for each line requested.
-    # We yield batches of DataRecordsReply, one for each line requested
-    project_cols = list(map(lambda c:  c.name, request.projectColumns))
-    column_types = list(map(lambda c: __columnTypeToString(c), request.projectColumns))
 
-    string_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "String", zip(project_cols, column_types))))
-    string_dict = dict([(item, index) for (index, item) in enumerate(string_cols)])
+    # Grab the projections we care about
+    project_names = list(map(lambda x: x.name, request.projectCols))
 
-    number_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "Number", zip(project_cols, column_types))))
-    number_dict = dict([(item, index) for (index, item) in enumerate(number_cols)])
+    # Grab our string + time projections to sort byt
+    string_project = list(filter(lambda x: __isStringColumnType(x.type), request.projectCols))
+    string_names = list(filter(lambda x: x.name), string_project))
 
-    time_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "Time", zip(project_cols, column_types))))
-    time_dict = dict([(item, index) for (index, item) in enumerate(time_cols)])
+    time_project = list(filter(lambda x: __isTimeColumnType(x.type), request.projectCols))
+    time_names = list(filter(lambda x: x.name), time_project))
 
     for line_query in request.lineQueries:
+        # Apply the line query to filter to
         filterExprs = __makeLineQueryPandas(line_query)
         line_query = ' and '.join(filterExprs)
 
-        # Filter data
-        line_result_df = df[project_cols].query(line_query)
+        # Filter data + sort by time
+        line_result_df = df[project_names].query(line_query)
+        line_result_df.sort_values(by=string_names + time_names, inplace=True)
 
-        line_result_df.sort_values(by=string_cols + time_cols, inplace=True)
-
-        # Serialize
-        data_records = []
-        for idx, row in line_result_df.iterrows():
-            strings = [api.OptionalString(value=proto.StringValue(value=None))] * len(string_cols)
-            numbers = [api.OptionalNumber(value=proto.DoubleValue(value=None))] * len(number_cols)
-            times = [api.OptionalTime(value=proto.Int64Value(value=None))] * len(time_cols)
-
-            for c, c_type in zip(project_cols, column_types):
-                if c_type == "String":
-                    if row[c] == None:
-                        strings[string_dict[c]] = api.OptionalString(value=None)
-                    else:
-                        strings[string_dict[c]] = api.OptionalString(value=proto.StringValue(value=row[c]))
-                elif c_type == "Number":
-                    if row[c] == None or math.isnan(row[c]):
-                        numbers[number_dict[c]] = api.OptionalNumber(value=None)
-                    else:
-                        numbers[number_dict[c]] = api.OptionalNumber(value=proto.DoubleValue(value=row[c]))
-                elif c_type == "Time":
-                    if row[c] == None or math.isnan(row[c].value):
-                        times[time_dict[c]] = api.OptionalTime(value=None)
-                    else:
-                        # read time as .value
-                        times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=__tsToUnixEpochSeconds(row[c])))
-
-            data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
-        yield api.DataRecordsReply(records=data_records)
+        # Send our batch -- do it in 1 chunk
+        num_rows = line_result_df.shape[0]
+        yield from __serializeDataFrame(line_result_df, request.projectColumns, num_rows)
