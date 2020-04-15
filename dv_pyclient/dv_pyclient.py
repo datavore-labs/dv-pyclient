@@ -64,7 +64,7 @@ def __getColumnTypeOptions(dType):
         }
     raise Exception(f'Unsupprted dType: {dType}')
 
-
+# Immutable on df
 def __getColumnConfigs(df):
     columnConfigs = []
     for name, dType in df.dtypes.items():
@@ -346,7 +346,7 @@ def __getColumnsByName(columnConfigs):
         map(lambda x: (x['name'], x), columnConfigs)
     )
 
-
+# Immutable on df
 def __validateLoaderConfig(loaderConfig, df=None):
     csvConfig = loaderConfig.get('loaderConfig')
     if not csvConfig:
@@ -429,7 +429,7 @@ def __validateLoaderConfig(loaderConfig, df=None):
 
     return True
 
-
+# Immutable on df
 def publish(session: Session, dataSourceId, df):
     # Get the current loader config
     currentConfig = __getDatasourceLoaderConfig(session, dataSourceId)
@@ -480,6 +480,7 @@ def __toStrNone(s):
         return None
     return str(s)
 
+# Immutable on df
 def __getDataFrameSample(df, colToSample=25, rowsToSample=25):
     # get only string columns -- @todo: is object fine? data frames with mixed types are object (so, strings with null)
     stringsOnly = list(
@@ -509,7 +510,7 @@ def __getDataFrameSample(df, colToSample=25, rowsToSample=25):
         'columnSamples': columnSamples
     }
 
-
+# Immutable on df
 def setDataSourceSample(session: Session, dataSourceId, df):
     # get the samples
     sample = __getDataFrameSample(df)

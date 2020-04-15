@@ -95,6 +95,7 @@ def __getSampleRowsPandas(df):
     return rowSamples
 
 
+# Immutable on df
 def __getColumnSamplesPandas(df):
     columnSamples = []
     for col in df.columns:
@@ -106,7 +107,7 @@ def __getColumnSamplesPandas(df):
         columnSamples.append(colGrpc)
     return columnSamples
 
-
+# Immutable on df
 def __getColumnConfigsPandas(df: pd.DataFrame):
     typedColumnConfigs = []
     pythonConfigs = []
@@ -161,6 +162,7 @@ def __makeLineQueryPandas(line_query):
     return filterExprs
 
 
+# Immutable on df
 def getDatasourceMetaReplyPandas(df, ds_id, ds_name):
     typedColumnConfigsAndMeta = __getColumnConfigsPandas(df)
     valueModifiers = []
@@ -189,6 +191,7 @@ def __dataTypeToString(dataType):
 def __tsToUnixEpochSeconds(timeStamp):
     return np.int_(timeStamp.value / 10**9)
 
+# Immutable on df
 # project_cols is a ProjectColumn[] grpc message
 # Iterate a dataframe's rows as api.DataRecordsReply
 # time columns must be serialized as numbers prior to this
@@ -238,6 +241,7 @@ def __serializeDataFrame(df, project_cols, chunk_size = 100):
         yield api.DataRecordsReply(records=data_records)
 
 
+# Immutable on df
 def dataSourceUniquesStreamPandas(df, request, chunk_size = 100):
     print("dataSourceUniquesStreamPandas", MessageToJson(request))
     df_names = list(map(lambda c:  c.name, request.projectColumns))
@@ -248,7 +252,7 @@ def dataSourceUniquesStreamPandas(df, request, chunk_size = 100):
     # Run the serialize code
     yield from __serializeDataFrame(unique_df, request.projectColumns, chunk_size)
 
-
+# !! Mutates DF (sorts on time on query result)
 def dataSourceQueryStreamPandas(df, request):
     print("dataSourceQueryStreamPandas", MessageToJson(request))
 
@@ -269,6 +273,7 @@ def dataSourceQueryStreamPandas(df, request):
 
         # Filter data + sort by time
         line_result_df = df[project_names].query(line_query)
+        # !! Mutates !!
         line_result_df.sort_values(by=string_names + time_names, inplace=True)
 
         # Send our batch -- do it in 1 chunk
