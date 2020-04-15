@@ -19,6 +19,12 @@ class BaseDatasourcePandas(rpc.RemoteDataSourceServicer):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details(f'No lines specified in request')
             raise RuntimeError('Invalid dataSourceQuery request')
+
+        if any(map(lambda query: query.dataSourceId != self.ds_id, request.lineQueries)):
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details(f'Unknown dataSourceId for query. Must be: {self.ds_id}')
+            raise RuntimeError('Invalid dataSourceQuery request')
+
         yield from util.dataSourceQueryStreamPandas(self.df, request)
 
     def dataSourceUniques(self, request: api.DataSourceUniquesRequest, context):
