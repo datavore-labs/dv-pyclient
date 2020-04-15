@@ -51,13 +51,23 @@ def __getDataLoadMappings(columnConfigs, valueModifiers):
         timeTuples=timeTuples
     )
 
+def __isStringColumnType(columnType):
+    return columnType == api.ColumnType.Value("String")
+
+def __isTimeColumnType(columnType):
+    return columnType == api.ColumnType.Value("Time")
+
+def __isNumberColumnType(columnType):
+    return columnType == api.ColumnType.Value("Number")
+
 def __columnTypeToString(projectedColumn):
-    if api.ColumnType.Value("String") == projectedColumn.type:
+    if __isStringColumnType(projectedColumn.type):
         return "String"
-    if api.ColumnType.Value("Time") == projectedColumn.type:
+    if __isTimeColumnType(projectedColumn.type):
         return "Time"
-    if api.ColumnType.Value("Number") == projectedColumn.type:
+    if __isNumberColumnType(projectedColumn.type):
         return "Number"
+
 
 
 
@@ -179,54 +189,64 @@ def __dataTypeToString(dataType):
 def __tsToUnixEpochSeconds(timeStamp):
     return np.int_(timeStamp.value / 10**9)
 
+# project_cols is a ProjectColumn[] grpc message
 # Iterate a dataframe's rows as api.DataRecordsReply
 # time columns must be serialized as numbers prior to this
 def __serializeDataFrame(df, project_cols, chunk_size = 100):
-    column_configs = map(lambda name: __getColumnTypeOptions(df.dtypes[name], name), project_cols)
-    column_types = list(map(lambda c: __dataTypeToString(c["dataType"]), column_configs))
-    string_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "String", zip(project_cols, column_types))))
-    string_dict = dict([(item, index) for (index, item) in enumerate(string_cols)])
+    string_project = list(filter(lambda x: __isStringColumnType(x.type), project_cols))
+    string_names = list(map(lambda x: x.name, string_project))
+    string_dict = dict([(item, index) for (index, item) in enumerate(string_names)])
 
-    number_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "Number", zip(project_cols, column_types))))
-    number_dict = dict([(item, index) for (index, item) in enumerate(number_cols)])
+    number_project = list(filter(lambda x: __isNumberColumnType(x.type), project_cols))
+    number_names = list(map(lambda x: x.name, number_project))
+    number_dict = dict([(item, index) for (index, item) in enumerate(number_names)])
 
-    time_cols = list(map(lambda x: x[0], filter(lambda c: c[1] == "Time", zip(project_cols, column_types))))
-    time_dict = dict([(item, index) for (index, item) in enumerate(time_cols)])
+    time_project = list(filter(lambda x: __isTimeColumnType(x.type), project_cols))
+    time_names = list(map(lambda x: x.name, time_project))
+    time_dict = dict([(item, index) for (index, item) in enumerate(time_names)])
 
     num_rows = df.shape[0]
     for chunk_df in list(filter(lambda x: not x.empty, np.array_split(df, math.ceil(num_rows / chunk_size)))):
         data_records = []
         for _, row in chunk_df.iterrows():
-            strings = [api.OptionalString(value=proto.StringValue(value=None))] * len(string_cols)
-            numbers = [api.OptionalNumber(value=proto.DoubleValue(value=None))] * len(number_cols)
-            times = [api.OptionalTime(value=proto.Int64Value(value=None))] * len(time_cols)
+            strings = [api.OptionalString(value=proto.StringValue(value=None))] * len(string_names)
+            numbers = [api.OptionalNumber(value=proto.DoubleValue(value=None))] * len(number_names)
+            times = [api.OptionalTime(value=proto.Int64Value(value=None))] * len(time_names)
 
-            for c, c_type in zip(project_cols, column_types):
-                if c_type == "String":
-                    if row[c] == None:
-                        strings[string_dict[c]] = api.OptionalString(value=None)
+            for col in project_cols:
+                # Strings
+                if __isStringColumnType(col.type):
+                    if row[col.name] == None:
+                        strings[string_dict[col.name]] = api.OptionalString(value=None)
                     else:
-                        strings[string_dict[c]] = api.OptionalString(value=proto.StringValue(value=row[c]))
-                elif c_type == "Number":
-                    if row[c] == None or math.isnan(row[c]):
-                        numbers[number_dict[c]] = api.OptionalNumber(value=None)
+                        strings[string_dict[col.name]] = api.OptionalString(value=proto.StringValue(value=row[col.name]))
+
+                # Numbers
+                elif __isNumberColumnType(col.type):
+                    if row[col.name] == None or math.isnan(row[col.name]):
+                        numbers[number_dict[col.name]] = api.OptionalNumber(value=None)
                     else:
-                        numbers[number_dict[c]] = api.OptionalNumber(value=proto.DoubleValue(value=row[c]))
-                elif c_type == "Time":
-                    if row[c] == None or math.isnan(row[c].value):
-                        times[time_dict[c]] = api.OptionalTime(value=None)
+                        numbers[number_dict[col.name]] = api.OptionalNumber(value=proto.DoubleValue(value=row[col.name]))
+
+                # Times
+                elif __isTimeColumnType(col.type):
+                    if row[col.name] == None or math.isnan(row[col.name].value):
+                        times[time_dict[col.name]] = api.OptionalTime(value=None)
                     else:
-                        times[time_dict[c]] = api.OptionalTime(value=proto.Int64Value(value=__tsToUnixEpochSeconds(row[c])))
+                        times[time_dict[col.name]] = api.OptionalTime(value=proto.Int64Value(value=__tsToUnixEpochSeconds(row[col.name])))
             data_records.append(api.DataRecord(strings=strings, numbers=numbers, times=times))
         yield api.DataRecordsReply(records=data_records)
 
 
 def dataSourceUniquesStreamPandas(df, request, chunk_size = 100):
     print("dataSourceUniquesStreamPandas", MessageToJson(request))
-    columns = list(request.columns)
-    unique_df = df[columns].drop_duplicates()
+    df_names = list(map(lambda c:  c.name, request.projectColumns))
+    stringsOnly = list(
+        df[df_names].select_dtypes(include=['category', 'object']).columns
+    )
+    unique_df = df[df_names].drop_duplicates(subset=stringsOnly)
     # Run the serialize code
-    yield from __serializeDataFrame(unique_df, columns, chunk_size)
+    yield from __serializeDataFrame(unique_df, request.projectColumns, chunk_size)
 
 
 def dataSourceQueryStreamPandas(df, request):
