@@ -58,7 +58,7 @@ message ListDataSourcesReply {
 
 message DataSourceUniquesRequest {
     string dataSourceId = 1;
-    repeated string columns = 2;
+	repeated ProjectColumn projectColumns = 2;
 }
 
 message DataSourceMetaRequest {
@@ -205,7 +205,8 @@ message TimeFilter {
 }
 
 message LineQuery {
-    repeated QueryFilter filters = 1;
+    string dataSourceId = 1;
+    repeated QueryFilter filters = 2;
 }
 
 message DataSourceQueryRequest {
