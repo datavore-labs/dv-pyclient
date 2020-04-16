@@ -4,7 +4,8 @@
 
 from setuptools import setup, find_packages
 
-requirements = ['Click>=7.0', 'pandas', 'numpy', 'PyJWT', 'requests', 'ndjson', 'grpcio>=1.27.2', 'protobuf']
+requirements = ['Click>=7.0', 'pandas', 'numpy', 'PyJWT', 'requests', 'ndjson', 'grpcio>=1.27.2', 'protobuf',
+                'psycopg2==2.8.5', 'snowflake-connector-python==2.2.4', 'snowflake-sqlalchemy==1.2.3']
 
 setup_requirements = ['pytest-runner', ]
 

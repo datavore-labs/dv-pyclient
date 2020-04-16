@@ -1,5 +1,6 @@
 from dv_pyclient.grpc import dataSources_pb2 as api
 from dv_pyclient.grpc import dataSources_pb2_grpc as rpc
+from dv_pyclient.grpc import db_util as dbutil
 
 from sqlite3 import dbapi2 as sqlite
 import psycopg2 as postgres
@@ -35,6 +36,7 @@ txns = [
     ('2006-06-02', 'SELL', 'MSFT', 1600, 135.60, 'USD'),
 ]
 
+
 def add_fake_data(conn, query_param_type):
     c = conn.cursor()
     c.execute('''DROP TABLE IF EXISTS stocks ''')
@@ -52,32 +54,41 @@ def add_fake_data(conn, query_param_type):
     conn.commit()
 
 
-def generateConfig(sql, con):
+def generateConfig(sql, con, type_code_map):
     c = con.cursor()
     c.execute(sql)
-    meta = [description for description in c.description]
-    print(meta)
-    batch = c.fetchmany(3)
-    while True:
-        if not batch:
-            break
-        for row in batch:
-            print(row)
-        batch = c.fetchmany(3)
+    metas = [description for description in c.description]
+    for meta in metas:
+        print(meta.type_code)
+        type = type_code_map[meta.type_code]
+        print(type)
+    dv_types = list(map(lambda meta: dbutil.postgres_type_code[meta.type_code][1], metas))
+    print(dv_types)
     c.close()
 
 
 if __name__ == '__main__':
-
     pg_conn = postgres.connect("dbname='postgres' user='postgres' host='localhost' "
                                "password='mysecretpassword'")
-    pg_query_param_type = postgres.paramstyle
-    add_fake_data(pg_conn, pg_query_param_type)
-    generateConfig("select * from stocks", pg_conn, pg_query_param_type)
+    # pg_query_param_type = postgres.paramstyle
+    # add_fake_data(pg_conn, pg_query_param_type)
+    # generateConfig("select * from stocks", pg_conn)
+    # type_map = dbutil.get_type_code_map(pg_conn)
+    # print(f'postgres_type_code={type_map}')
+    #
+    # import snowflake.connector
+    # # Gets the version
+    # ctx = snowflake.connector.connect(
+    #     user='sanjayvenkat2000',
+    #     password='Snowflakeletmein1!',
+    #     account='xi91106.us-central1.gcp'
+    # )
+    # type_map = dbutil.get_type_code_map(pg_conn)
+    # print(f'snowflake_type_code={type_map}')
 
-    sqlite_query_param_type = sqlite.paramstyle
-    sqlite_conn = sqlite.connect(sampleDb)
-    add_fake_data(sqlite_conn, sqlite_query_param_type)
-    generateConfig("select * from stocks", sqlite_conn)
+    generateConfig("select * from stocks", pg_conn, dbutil.postgres_type_code)
 
-
+    # sqlite_query_param_type = sqlite.paramstyle
+    # sqlite_conn = sqlite.connect(sampleDb)
+    # add_fake_data(sqlite_conn, sqlite_query_param_type)
+    # generateConfig("select * from stocks", sqlite_conn)

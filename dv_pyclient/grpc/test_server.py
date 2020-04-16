@@ -1,4 +1,4 @@
-from dv_pyclient.grpc import base_datasource_pandas as base
+from dv_pyclient.grpc import datasource_manager as ds
 from dv_pyclient.grpc import dataSources_pb2_grpc as rpc
 import pandas as pd
 from io import StringIO
@@ -39,23 +39,23 @@ date,trans,symbol,qty,price,currency
 2006-06-02,SELL,MSFT,1600,135.60,USD
 """
 
-###
-## Configure a Pandas datasource to server.
-#######
-class PandasDataSource(base.BaseDatasourcePandas):
-    def __init__(self):
-        self.df = pd.read_csv(StringIO(sample_data), sep=",", parse_dates=['date'])
-        self.ds_id = "my_assigned_ds_id"
-        self.ds_name = "my_stock_trans"
-        super()
-
-
 ### Run the server and server your datasource
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     server_port = 50051
 
-    rpc.add_RemoteDataSourceServicer_to_server(PandasDataSource(), server)
+    ds_manager = ds.DataSourceManager()
+
+    # A test pandas datasource
+    test_df = pd.read_csv(StringIO(sample_data), sep=",", parse_dates=['date'])
+    test_df_id = "my_assigned_ds_id"
+    test_df_name = "my_stock_trans"
+    test_datasource_pd = ds.PandasDatasource(test_df_id, test_df_name, test_df)
+    ds_manager.addDataSource(test_df_id, test_df_name, test_datasource_pd)
+
+    # A John Hopkins
+
+    rpc.add_RemoteDataSourceServicer_to_server(ds_manager, server)
     server.add_insecure_port(f'[::]:{server_port}')
     server.start()
     print(f"Started server on port {server_port}")
