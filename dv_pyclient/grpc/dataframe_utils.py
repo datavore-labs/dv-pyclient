@@ -2,6 +2,7 @@
 Utilities for connecting datavore, dataframes, and gRPC
 '''
 
+from typing import Generator, List
 import math
 import numpy as np
 import dv_pyclient.grpc.dataSources_pb2 as msg
@@ -11,10 +12,15 @@ import dv_pyclient.grpc.converters as convert
 import dv_pyclient.dataload._domain as dv_dataload
 from dv_pyclient.dataframe.util import ts_to_unix_epoch_seconds, get_sample as get_df_sample
 
-def serialize_data_frame(df, project_cols, chunk_size = 100):
-    '''
-    Generator.
+import logging
+logging.basicConfig(
+    format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
+def serialize_data_frame(df, project_cols: List[msg.ProjectColumn], chunk_size = 100) -> Generator[msg.DataRecordsReply, None, None]:
+    '''
     Iterate a dataframe's rows as api.DataRecordsReply
     !!! time columns must be converted to int BEFORE this method is called !!!
 
@@ -24,17 +30,35 @@ def serialize_data_frame(df, project_cols, chunk_size = 100):
     :param project_cols: ProjectColumn[] - columns and type order to keep things aligned
     :param chunk_size: Int - Optional chunking size for record arrays
     '''
-    string_project = list(filter(lambda x: util.is_string_column_type(x.type), project_cols))
-    string_names = list(map(lambda x: x.name, string_project))
-    string_dict = dict([(item, index) for (index, item) in enumerate(string_names)])
+    string_names = [
+        x.name
+        for x in project_cols
+        if util.is_string_column_type(x.type)
+    ]
+    string_dict = {
+        col_name : index
+        for (index, col_name) in enumerate(string_names)
+    }
 
-    number_project = list(filter(lambda x: util.is_number_column_type(x.type), project_cols))
-    number_names = list(map(lambda x: x.name, number_project))
-    number_dict = dict([(item, index) for (index, item) in enumerate(number_names)])
+    number_names = [
+        x.name
+        for x in project_cols
+        if util.is_number_column_type(x.type)
+    ]
+    number_dict = {
+        col_name : index
+        for (index, col_name) in enumerate(number_names)
+    }
 
-    time_project = list(filter(lambda x: util.is_time_column_type(x.type), project_cols))
-    time_names = list(map(lambda x: x.name, time_project))
-    time_dict = dict([(item, index) for (index, item) in enumerate(time_names)])
+    time_names = [
+        x.name
+        for x in project_cols
+        if util.is_time_column_type(x.type)
+    ]
+    time_dict = {
+        col_name : index
+        for (index, col_name) in enumerate(time_names)
+    }
 
     num_rows = df.shape[0]
     for chunk_df in list(filter(lambda x: not x.empty, np.array_split(df, math.ceil(num_rows / chunk_size)))):
@@ -69,7 +93,7 @@ def serialize_data_frame(df, project_cols, chunk_size = 100):
         yield msg.DataRecordsReply(records=data_records)
 
 
-def generate_data_frame_uniques(df, request: msg.DataSourceQueryRequest, chunk_size = 100):
+def generate_data_frame_uniques(df, request: msg.DataSourceQueryRequest, chunk_size = 100) -> Generator[msg.DataRecordsReply, None, None]:
     '''
     Generic logic for handling uniques request on a data frame.
     Generates DataLoadRecord responses.
@@ -84,11 +108,7 @@ def generate_data_frame_uniques(df, request: msg.DataSourceQueryRequest, chunk_s
     # Run the serialize code
     yield from serialize_data_frame(unique_df, request.projectColumns, chunk_size)
 
-def map_dv_config_to_grpc(column_config):
-    '''Maps dv dataload domain column configs to gRPC messages'''
-    msg.ColumnConfig()
-
-def generate_data_frame_meta(df, name, request: msg.DataSourceMetaRequest):
+def generate_data_frame_meta(df, name, request: msg.DataSourceMetaRequest) -> msg.DataSourceMetaReply:
     # Extract meta as we would for load
     column_configs = dv_dataload.get_column_configs(df)
     load_mapping = dv_dataload.simple_load_mapping(column_configs)
@@ -108,3 +128,55 @@ def generate_data_frame_meta(df, name, request: msg.DataSourceMetaRequest):
         sampleData=grpc_row_samples,
         columnSamples=grpc_column_samples
     )
+
+def make_line_query(query: msg.QueryFilter) -> str:
+    '''
+    Convert a filter to a query predicate to pass into pandas data frame query
+    '''
+
+    # String filters are or'd of each of the cols (is this true...?)
+    if len(query.stringFilter.stringFilter) > 0:
+        return ' or '.join(
+            f'{query.stringFilter.name} == "{strFilter.value.value}"' for strFilter in query.stringFilter.stringFilter
+        )
+
+    # @todo: other filters
+    return ''
+
+
+def query_data_frame(df, request: msg.DataSourceQueryRequest) -> Generator[msg.DataRecordsReply, None, None]:
+    '''
+    Applies a set of queries to the given data frame and yields the records
+
+    !!! Mutates DF (sorts on time on query result) !!!
+    '''
+    # Grab the projections we care about
+    project_names = [x.name for x in request.projectColumns]
+
+    # Grab our string + time projections to sort byt
+    string_names = [
+        x.name
+        for x in request.projectColumns
+        if util.is_string_column_type(x.type)
+    ]
+
+    time_names = [
+        x.name
+        for x in request.projectColumns
+        if util.is_time_column_type(x.type)
+    ]
+
+    for line_query in request.lineQueries:
+        # Apply the line query to filter to
+        filterExprs = [make_line_query(query) for query in line_query.filters]
+        line_query = ' and '.join(filterExprs)
+        logger.info(f'Line query: {line_query}')
+
+        # Filter data + sort by time
+        line_result_df = df[project_names].query(line_query)
+        # !! Mutates !!
+        line_result_df.sort_values(by=string_names + time_names, inplace=True)
+
+        # Send our batch -- do it in 1 chunk
+        num_rows = line_result_df.shape[0]
+        yield from serialize_data_frame(line_result_df, request.projectColumns, num_rows)
