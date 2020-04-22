@@ -12,16 +12,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# Error handler to stderr
-handler = logging.StreamHandler(sys.stderr)
-handler.setLevel(logging.ERROR)
-logger.addHandler(handler)
-
-# Debug handler to stdout
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-logger.addHandler(handler)
-
 # Include our local libs depending on cwd
 sys.path.insert(0,'.')
 

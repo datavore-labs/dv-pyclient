@@ -192,3 +192,68 @@ Response
   }
 }
 ```
+
+
+# dataSourceQuery
+Request
+```json
+{
+  "lineQueries": [
+    {
+      "dataSourceId": "ds_id_test_grpc",
+      "filters": [
+        {
+          "stringFilter": {
+            "name": "trans",
+            "stringFilter": [
+              {
+                "value": {
+                  "value": "BUY"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "stringFilter": {
+            "name": "symbol",
+            "stringFilter": [
+              {
+                "value": {
+                  "value": "RHAT"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "projectColumns": [
+    {
+      "name": "date",
+      "type": 2
+    },
+    {
+      "name": "trans",
+      "type": 0
+    },
+    {
+      "name": "symbol",
+      "type": 0
+    },
+    {
+      "name": "qty",
+      "type": 1
+    },
+    {
+      "name": "price",
+      "type": 1
+    },
+    {
+      "name": "currency",
+      "type": 0
+    }
+  ]
+}
+```

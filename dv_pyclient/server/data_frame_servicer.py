@@ -21,15 +21,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# Error handler to stderr
-handler = logging.StreamHandler(sys.stderr)
-handler.setLevel(logging.ERROR)
-logger.addHandler(handler)
-
-# Debug handler to stdout
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-logger.addHandler(handler)
 
 class DataFrameServicer(RemoteDataSourceServicer):
     '''
@@ -99,11 +90,10 @@ class DataFrameServicer(RemoteDataSourceServicer):
             raise e
 
     def sampleDataSourceMeta(self, request: msg.DataSourceMetaRequest, context) -> msg.DataSourceMetaReply:
-        '''Returns the meta needed to read the dataRecords as lines
+        '''
+        Returns the meta needed to read the dataRecords as lines
         '''
         try:
-            # Generate a bunch of msg.DataLoadRecord
-            # yield from
             logger.info(f'sampleDataSourceMeta: {MessageToJson(request)}')
             if not request.dataSourceId in self.registry:
                 raise KeyError(f'Requested remote id {request.dataSourceId} not in registry.')
@@ -119,12 +109,24 @@ class DataFrameServicer(RemoteDataSourceServicer):
             raise e
 
     def dataSourceQuery(self, request: msg.DataSourceQueryRequest, context) -> Generator[msg.DataRecordsReply, None, None]:
-        '''Sends a list of lines to retrieve, and gets the dataRecords back
+        '''
+        Sends a list of lines to retrieve, and gets the dataRecords back
         '''
         try:
-            # Generate a bunch of msg.DataLoadRecord
-            # yield from
             logger.info(f'dataSourceQuery: {MessageToJson(request)}')
+
+            for query in request.lineQueries:
+                if not query.dataSourceId in self.registry:
+                    raise KeyError(f'Requested remote id {query.dataSourceId} not in registry.')
+
+                registered = self.registry[query.dataSourceId]
+                df = registered['df']
+                name = registered['name']
+                sub_request = msg.DataSourceQueryRequest(
+                    projectColumns = request.projectColumns,
+                    lineQueries = [query]
+                )
+                yield from grpc_dataframe.query_data_frame(df, sub_request)
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details('Internal server error.')
