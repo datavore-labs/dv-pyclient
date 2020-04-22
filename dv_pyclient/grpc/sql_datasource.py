@@ -41,10 +41,10 @@ def add_fake_data(conn, query_param_type):
     c = conn.cursor()
     c.execute('''DROP TABLE IF EXISTS stocks ''')
     c.execute('''CREATE TABLE stocks(
-        date date, 
-        trans text, 
-        symbol text, 
-        qty real, 
+        date date,
+        trans text,
+        symbol text,
+        qty real,
         price real,
         currency text
     )''')

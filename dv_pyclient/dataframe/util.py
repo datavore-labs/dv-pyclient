@@ -61,3 +61,6 @@ def get_sample(df, col_samples=25, row_samples=25):
         'sampleData': sampleValues,
         'columnSamples': columnSamples
     }
+
+def ts_to_unix_epoch_seconds(time_stamp):
+    return np.int_(time_stamp.value / 10**9)

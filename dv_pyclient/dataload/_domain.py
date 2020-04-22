@@ -32,6 +32,12 @@ def ds_meta(data_source_id, datasource, publisher, dataset, read_groups = []):
         'readGroups': read_groups,
     }
 
+def time_tuple(time_column, value_column):
+    return {
+        'timeColumn': time_column,
+        'valueColumn': value_column
+    }
+
 def load_mapping(key_columns = [], value_modifiers = [], time_columns = [], frequency = None, value_label_columns = [], time_tuples = []):
     '''
     Describes how the tabular data should load into lines.
@@ -164,7 +170,10 @@ def simple_load_mapping(column_configs):
     for v in numbers:
         for t in times:
             time_tuples.append(
-                {'timeColumn': t['name'], 'valueColumn': v['name']}
+                time_tuple(
+                    time_column = t['name'],
+                    value_column = v['name']
+                )
             )
 
     return load_mapping(
