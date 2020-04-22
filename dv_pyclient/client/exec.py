@@ -1,10 +1,13 @@
+'''Get data from the Datavore client and convert lines to data frames'''
+
 import copy
 import requests
+import ndjson
 import pandas as pd
 import numpy as np
 
-from ..dataframe.util import make_empty as make_empty_df
-from ..auth.auth import Session
+import dv_pyclient.dataframe.util as df_util
+import dv_pyclient.auth.auth as auth
 
 def __extract_line_meta(lines_in):
     '''
@@ -43,7 +46,7 @@ def lines_to_df(lines_in) -> pd.DataFrame:
 
     key_columns, time_columns, value_columns, dtype = __extract_line_meta(lines_in)
 
-    df = make_empty_df(list(key_columns + time_columns + value_columns), dtype)
+    df = df_util.make_empty(list(key_columns + time_columns + value_columns), dtype)
 
     for line in lines_in:
         row_keys = {}
@@ -63,7 +66,7 @@ def lines_to_df(lines_in) -> pd.DataFrame:
         index=index_columns
     ).reset_index()
 
-def get_data(session: Session, step_info=None):
+def get_data(session: auth.Session, step_info=None):
     '''
     Load data from the Datavore client.
     Can be turned into a Pandas data frame using lines_to_df.
@@ -96,8 +99,7 @@ def get_data(session: Session, step_info=None):
         return payload
 
     if res.status_code == 401:
-        session = login(session.user_name, session.env_conf)
+        session = auth.login(session.user_name, session.env_conf)
         return get_data(session, step_info)
 
     raise Exception(res.status_code, res.content.decode('ascii'))
-
