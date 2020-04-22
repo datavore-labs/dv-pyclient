@@ -40,7 +40,8 @@ def get_sample(df, col_samples=25, row_samples=25):
     )
 
     # get a distinct on strings sample
-    sampleData = df.drop_duplicates(subset=stringsOnly).sample(min(len(df), row_samples))
+    unique_df = df.drop_duplicates(subset=stringsOnly)
+    sampleData = unique_df.sample(min(unique_df.shape[0], row_samples))
 
     # format dates as iso strings
     datesOnly = list(
@@ -51,7 +52,7 @@ def get_sample(df, col_samples=25, row_samples=25):
     # first 25 unique non-null values of column c
     columnSamples = {}
     for c in df.columns:
-        sample = df[c].dropna().sample(col_samples, replace=True)
+        sample = df[c].dropna().sample(min(df.shape[0], col_samples))
         columnSamples[c] = list(map(str, sample))
 
     sampleValues = sampleData.where(pd.notnull(df), None).applymap(to_str_none).values.tolist()

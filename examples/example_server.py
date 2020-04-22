@@ -30,9 +30,9 @@ import pandas as pd
 from concurrent import futures
 from io import StringIO
 import dv_pyclient
-print(dv_pyclient)
 from dv_pyclient.server.data_frame_servicer import DataFrameServicer
 import dv_pyclient.grpc.dataSources_pb2_grpc as rpc
+
 ### Run the server and server your datasource
 def serve(data_id, data_name, data_frame):
     # build the grpc server

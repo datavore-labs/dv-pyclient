@@ -85,8 +85,7 @@ def dv_row_sample_to_grpc(row) -> msg.RowSample:
     return msg.RowSample(values = grpc_values)
 
 def dv_column_sample_to_grpc(name, sample) -> msg.ColumnSample:
-    grpc_values = [str_opt_grpc(value) for value in sample]
     return msg.ColumnSample(
         columnName = name,
-        values = grpc_values
+        values = sample
     )

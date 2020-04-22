@@ -261,10 +261,10 @@ def dataSourceQueryStreamPandas(df, request):
 
     # Grab our string + time projections to sort byt
     string_project = list(filter(lambda x: __isStringColumnType(x.type), request.projectCols))
-    string_names = list(filter(lambda x: x.name), string_project))
+    string_names = list(filter(lambda x: x.name, string_project))
 
     time_project = list(filter(lambda x: __isTimeColumnType(x.type), request.projectCols))
-    time_names = list(filter(lambda x: x.name), time_project))
+    time_names = list(filter(lambda x: x.name, time_project))
 
     for line_query in request.lineQueries:
         # Apply the line query to filter to
