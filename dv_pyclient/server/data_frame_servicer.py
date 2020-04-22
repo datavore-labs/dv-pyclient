@@ -47,7 +47,7 @@ class DataFrameServicer(RemoteDataSourceServicer):
         :param name: String - The remote data name
         :param df: String - data frame to back the remote id
         '''
-        if (self.registry[id]):
+        if id in self.registry:
             logger.info(f'Updating id {id}')
             if (self.registry[id]['name'] != name):
                 logger.warn(f'Unexpected name change when updating. From {self.registry[id]["name"] != name} to {name}. This might be an error!')
@@ -71,7 +71,7 @@ class DataFrameServicer(RemoteDataSourceServicer):
             output = [
                 msg.DataSourceResult(id = source['id'], name = source['name'])
                 # Sort the registry by name
-                for source in sorted(self.registry, key = lambda x: x['name'])
+                for source in sorted(self.registry.values(), key = lambda x: x['name'])
             ]
             return msg.ListDataSourcesReply(dataSources=output)
         except Exception as e:
