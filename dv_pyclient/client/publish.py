@@ -112,7 +112,7 @@ def set_data_source_sample(session: dv_auth.Session, data_source_id, df):
     # get the samples
     sample = df_util.get_sample(df)
 
-    # Build our details from the data frame
+    # Build our default config
     column_configs = dataload_domain.get_column_configs(df)
     data_source_meta = dataload_domain.ds_meta(
         data_source_id = data_source_id,
