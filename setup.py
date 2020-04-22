@@ -26,7 +26,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description="Python client for datavore. Connection auth and grpc support",
+    description="Python libraries for Datavore. Auth, Exec, Publish, gRPC, ....",
     entry_points={
         'console_scripts': [
             'dv_pyclient=dv_pyclient.cli:main',
@@ -34,7 +34,7 @@ setup(
     },
     install_requires=requirements,
     license="MIT license",
-    long_description="dv_pyclient package for client and grpc services",
+    long_description="Provides python services to interact with Datavore's applications and servers. Auth, Exec, Publish, gRPC, ....",
     include_package_data=True,
     keywords='dv_pyclient',
     name='dv_pyclient',
