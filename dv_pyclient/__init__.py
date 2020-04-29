@@ -23,5 +23,5 @@
 
 __author__ = """Datavore Labs"""
 __email__ = 'info@datavorelabs.com'
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 __path__ = __import__('pkgutil').extend_path(__path__, __name__)
