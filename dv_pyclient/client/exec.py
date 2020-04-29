@@ -48,6 +48,7 @@ def lines_to_df(lines_in) -> pd.DataFrame:
 
     df = df_util.make_empty(list(key_columns + time_columns + value_columns), dtype)
 
+    to_append = []
     for line in lines_in:
         row_keys = {}
         time_key = line['time']
@@ -58,13 +59,19 @@ def lines_to_df(lines_in) -> pd.DataFrame:
             base = copy.copy(row_keys)
             base[time_key] = pd.to_datetime(data_point[0], unit='ms')
             base[value_key] = data_point[1]
-            df = df.append(base, ignore_index=True)
+            to_append.append(base)
 
-    index_columns = list(key_columns + time_columns)
+    df = df.append(to_append, ignore_index=True)
 
-    return df.pivot_table(
-        index=index_columns
-    ).reset_index()
+    # For single time, pivot the table to reduce sparse
+    if (len(time_columns) == 1):
+        index_columns = list(key_columns + time_columns)
+        return df.pivot_table(
+            index = index_columns
+        ).reset_index()
+
+    # Otherwise, return the non-pivoted table
+    return df
 
 def get_data(session: auth.Session, step_info=None):
     '''
