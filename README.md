@@ -49,7 +49,7 @@ pip install dist/dv_pyclient-XXX.tar.gz
 ### Upload to PyPi
 twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
 user: sanjayvenkat2000
-pass: askme
+pass: asksanjay
 
 
 
