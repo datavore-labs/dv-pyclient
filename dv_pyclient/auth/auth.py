@@ -1,6 +1,5 @@
 '''login and session management'''
 
-import getpass
 import requests
 import jwt
 
@@ -36,10 +35,10 @@ def login(env_conf=None, user_name=None, password=None):
         raise Exception('Invalid env_conf. Requires { authDomain: String }')
 
     if user_name == None:
-        user_name = input('Login user name: ')
+        raise Exception('Invalid User name. Requires')
 
     if password == None:
-        password = getpass.getpass(prompt=f'Enter password for user {user_name} :')
+        raise Exception('Invalid env_conf. Requires')
 
     res = requests.get(
         f'{env_conf["authDomain"]}/login', auth=(user_name, password)
