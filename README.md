@@ -14,19 +14,6 @@ Provides a lightweight client to communicate with Datavore server.  The client s
 Ugh!. Python best practices we know.  We are not expert python developers!!!
 
 ## Development
-Make a virtual env in a directory outside the project dir
-```
-python -m venv /path-to-create-environment-in
-source /path-to-create-environment-in/bin/activate
-```
-
-OR
-
-Install deps
-```
-pip install -r requirements_dev.txt
-make install
-```
 
 ### Prerequisites
 * Install Git
@@ -50,7 +37,7 @@ make install
 `python setup.py develop`
 
 ### Deployment
-* Install [bumpversion](https://pypi.org/project/bumpversion/)
+* Install [bumpversion](https://pypi.org/project/bumpversion/) and [twine](https://pypi.org/project/twine/)
 * Bump version if your are getting read to release a version. Note:  For development, just delete the `dist/*` 
 ```
 bumpversion patch 
